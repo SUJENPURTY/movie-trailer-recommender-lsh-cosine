@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}{{ movie.title if movie else 'Movie Details' }}{% endblock %}
+
+{% block content %}
+{% if error %}
+<section class="message error">
+    <h2>Movie unavailable</h2>
+    <p>{{ error }}</p>
+    <a class="ghost-link" href="{{ url_for('home') }}">Back to search</a>
+</section>
+{% else %}
+<section class="movie-layout">
+    <article class="movie-info glass-panel">
+        {% if movie.poster_url %}
+        <img class="detail-poster" src="{{ movie.poster_url }}" alt="{{ movie.title }} poster">
+        {% endif %}
+        <div>
+            <p class="eyebrow">TMDB ID {{ movie.tmdb_id }}</p>
+            <h1>{{ movie.title }}</h1>
+            <p>{{ movie.overview }}</p>
+            <p><strong>Release:</strong> {{ movie.release_date or 'N/A' }}</p>
+            <p><strong>Rating:</strong> {{ '%.1f'|format(movie.vote_average) }} ({{ movie.vote_count }} votes)</p>
+            <a class="ghost-link" href="{{ url_for('home') }}">Back to search</a>
+        </div>
+    </article>
+
+    <section class="trailer-box glass-panel">
+        <h2>Official Trailer</h2>
+        {% if trailer_key %}
+        <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/{{ trailer_key }}" title="{{ movie.title }} trailer"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        </div>
+        {% elif not tmdb_api_configured %}
+        <p>Add <code>TMDB_API_KEY</code> to your environment to enable trailer playback.</p>
+        {% else %}
+        <p>Trailer not found for this movie.</p>
+        {% endif %}
+    </section>
+</section>
+{% endif %}
+{% endblock %}

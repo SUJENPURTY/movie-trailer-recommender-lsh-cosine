@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Recommendations | {{ query }}{% endblock %}
+
+{% block content %}
+<section class="result-head">
+    <p class="eyebrow">Top 5 Results</p>
+    <h1>Recommendations for "{{ query }}"</h1>
+    <p class="subtext">Method: <strong>{{ method|upper }}</strong></p>
+    {% if runtime_ms is not none %}
+    <p class="subtext">Runtime: <strong>{{ '%.2f'|format(runtime_ms) }} ms</strong></p>
+    {% endif %}
+    <div class="method-switch">
+        <form action="{{ url_for('recommend') }}" method="post">
+            <input type="hidden" name="movie_name" value="{{ query }}">
+            <button type="submit" name="method" value="lsh"
+                class="switch-btn {% if method == 'lsh' %}active{% endif %}">
+                Try LSH
+            </button>
+        </form>
+        <form action="{{ url_for('recommend') }}" method="post">
+            <input type="hidden" name="movie_name" value="{{ query }}">
+            <button type="submit" name="method" value="cosine"
+                class="switch-btn {% if method == 'cosine' %}active{% endif %}">
+                Try Cosine
+            </button>
+        </form>
+    </div>
+    <a class="ghost-link" href="{{ url_for('home') }}">Search another movie</a>
+</section>
+
+{% if error %}
+<section class="message error">
+    <h2>Could not fetch recommendations</h2>
+    <p>{{ error }}</p>
+</section>
+{% endif %}
+
+{% if recommendations %}
+<section class="card-grid">
+    {% for movie in recommendations %}
+    <article class="movie-card">
+        <a class="poster-link" href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}">
+            {% if movie.poster_url %}
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" loading="lazy">
+            {% else %}
+            <div class="poster-fallback">No Poster</div>
+            {% endif %}
+        </a>
+        <div class="card-body">
+            <h2>{{ movie.title }}</h2>
+            <p>Score: {{ '%.4f'|format(movie.score) }}</p>
+            <a class="btn-secondary" href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}">View Trailer</a>
+        </div>
+    </article>
+    {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

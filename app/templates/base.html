@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}MovieMatchAI | LSH Movie Recommendations{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="bg-orb bg-orb--one" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb--two" aria-hidden="true"></div>
+    <div class="bg-orb bg-orb--three" aria-hidden="true"></div>
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <header class="app-header" id="home">
+        <div class="container">
+            <section class="academic-card" aria-label="Academic Project Header">
+                <p class="academic-card__subject">Subject: ED417 - Algorithm For Big Data I</p>
+                <h1 class="academic-card__title">Project Title: LSH Based Movie Recommendation System</h1>
+                <p class="academic-card__submitted">Submitted by:</p>
+                <ul class="academic-card__authors">
+                    <li>Sujen Purty (IED/10023/22)</li>
+                    <li>Mokalla Venu (IED/10020/22)</li>
+                </ul>
+            </section>
+        </div>
+    </header>
+
+    <nav class="navbar" aria-label="Primary Navigation">
+        <div class="container navbar__inner">
+            <a class="navbar__brand" href="{{ url_for('home') }}" aria-label="MovieMatchAI Home">
+                <span class="navbar__brand-icon" aria-hidden="true">🎬</span>
+                <span class="navbar__brand-text">MovieMatchAI</span>
+            </a>
+            <div class="navbar__links">
+                <a class="navbar__link" href="{{ url_for('home') }}">Home</a>
+                <a class="navbar__link" href="{{ url_for('home') }}#explore">Explore</a>
+                <a class="navbar__link" href="{{ url_for('home') }}#about">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content" id="explore">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="site-footer" id="about">
+        <div class="container">
+            <p>© 2026 MovieMatch AI • Built with LSH</p>
+        </div>
+    </footer>
+</body>
+
+</html>

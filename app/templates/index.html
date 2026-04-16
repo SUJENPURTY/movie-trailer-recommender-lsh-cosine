@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}MovieMatchAI | Startup-Grade Movie Recommendations{% endblock %}
+
+{% block content %}
+{% set movies = movies if movies is defined else [] %}
+{% set has_movies = movies|length > 0 %}
+
+<section class="saas-homepage" id="explore">
+    <section class="saas-hero glass-panel">
+        <p class="eyebrow">Movie Recommendation System</p>
+        <h1>Find Movies You’ll Love Instantly</h1>
+        <p class="saas-hero__subtext">
+            Powered by LSH &amp; Cosine Similarity for fast and accurate recommendations
+        </p>
+
+        <form id="movieSearchForm" class="saas-search" action="{{ url_for('recommend') }}" method="post">
+            <div class="saas-search__field">
+                <input id="movieSearchInput" name="movie_name" type="text" placeholder="Search for a movie..."
+                    value="{{ request.args.get('movie_name', '') }}" list="movie-list" autocomplete="off" required>
+            </div>
+            <datalist id="movie-list">
+                {% for title in movie_titles %}
+                <option value="{{ title }}"></option>
+                {% endfor %}
+            </datalist>
+            <button id="movieSearchButton" type="submit">Search</button>
+        </form>
+    </section>
+
+    {% if startup_error %}
+    <section class="message error">
+        <h2>Model Not Ready</h2>
+        <p>{{ startup_error }}</p>
+    </section>
+    {% else %}
+    <section class="saas-model-panel glass-panel">
+        <div class="saas-model-panel__row">
+            <p class="eyebrow">Model Selection</p>
+            <p id="activeModelMeta" class="saas-model-panel__meta">Active Model: LSH</p>
+        </div>
+
+        <div class="saas-toggle" role="group" aria-label="Recommendation model">
+            <button type="button" class="saas-toggle__btn" data-method="cosine">Cosine Similarity</button>
+            <button type="button" class="saas-toggle__btn is-active" data-method="lsh">LSH</button>
+        </div>
+        <p id="activeModelRuntime" class="saas-model-panel__runtime">Runtime: -- ms</p>
+    </section>
+
+    <section class="saas-performance-grid">
+        <article class="saas-metric glass-panel">
+            <p class="saas-metric__label">Cosine Time</p>
+            <p id="cosineTimeValue" class="saas-metric__value">-- ms</p>
+        </article>
+        <article class="saas-metric glass-panel">
+            <p class="saas-metric__label">LSH Time</p>
+            <p id="lshTimeValue" class="saas-metric__value">-- ms</p>
+        </article>
+        <article class="saas-metric glass-panel">
+            <p class="saas-metric__label">Speed Ratio</p>
+            <p id="speedRatioValue" class="saas-metric__value">--</p>
+        </article>
+    </section>
+
+    <section class="saas-chart-panel glass-panel">
+        <div class="saas-chart-panel__head">
+            <div>
+                <p class="eyebrow">Graph Section</p>
+                <h2>Cosine vs LSH Runtime Comparison</h2>
+            </div>
+        </div>
+        <div class="saas-chart-wrap">
+            <canvas id="runtimeComparisonChart" aria-label="Cosine and LSH runtime comparison chart"></canvas>
+        </div>
+    </section>
+
+    <section class="saas-interpretation glass-panel" id="about">
+        <p class="eyebrow">Interpretation</p>
+        <h2>Understanding Accuracy vs Speed</h2>
+        <p>
+            Cosine Similarity provides highly accurate recommendations but is computationally expensive.
+        </p>
+        <p>
+            Locality Sensitive Hashing (LSH) significantly reduces computation time by approximating nearest neighbors,
+            making it scalable for large datasets.
+        </p>
+        <p>Thus:</p>
+        <ul>
+            <li>Use Cosine for accuracy</li>
+            <li>Use LSH for speed</li>
+        </ul>
+    </section>
+    {% endif %}
+
+    <section class="saas-results" id="results">
+        <div class="saas-results__head">
+            <p class="eyebrow">Recommended Movies</p>
+            <h2>Netflix-Style Discover Feed</h2>
+            <p id="resultsSummary" class="subtext">
+                {% if has_movies %}
+                Showing initial recommendations.
+                {% else %}
+                Start by searching your favorite movie
+                {% endif %}
+            </p>
+        </div>
+
+        <section id="emptyState" class="saas-empty-state glass-panel {% if has_movies %}is-hidden{% endif %}">
+            <h3>Start by searching your favorite movie</h3>
+            <p>Use the search bar above and switch between Cosine Similarity and LSH to compare results.</p>
+        </section>
+
+        <div id="movieGrid" class="saas-movie-grid {% if not has_movies %}is-hidden{% endif %}">
+            {% for movie in movies %}
+            <article class="saas-movie-card">
+                <a class="poster-link" href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}">
+                    {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" loading="lazy">
+                    {% else %}
+                    <div class="poster-fallback">No Poster</div>
+                    {% endif %}
+                </a>
+                <div class="card-body">
+                    <h2>{{ movie.title }}</h2>
+                    <a class="btn-secondary" href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}">View
+                        Trailer</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+</section>
+
+{% if not startup_error %}
+<script id="runtimeSeedData" type="application/json">{{ {
+    "cosine": runtime_cosine_times,
+    "lsh": runtime_lsh_times
+}|tojson }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function () {
+        const searchForm = document.getElementById("movieSearchForm");
+        const searchInput = document.getElementById("movieSearchInput");
+        const searchButton = document.getElementById("movieSearchButton");
+        const toggleButtons = Array.from(document.querySelectorAll(".saas-toggle__btn"));
+        const movieGrid = document.getElementById("movieGrid");
+        const emptyState = document.getElementById("emptyState");
+        const resultsSummary = document.getElementById("resultsSummary");
+        const activeModelMeta = document.getElementById("activeModelMeta");
+        const activeModelRuntime = document.getElementById("activeModelRuntime");
+        const cosineTimeValue = document.getElementById("cosineTimeValue");
+        const lshTimeValue = document.getElementById("lshTimeValue");
+        const speedRatioValue = document.getElementById("speedRatioValue");
+        const chartCanvas = document.getElementById("runtimeComparisonChart");
+        const seedNode = document.getElementById("runtimeSeedData");
+
+        if (!searchForm || !searchInput || !searchButton || !movieGrid || !emptyState || !resultsSummary) {
+            return;
+        }
+
+        const recommendUrl = "{{ url_for('recommend') }}?format=json";
+        const movieDetailBase = "{{ url_for('movie_detail', tmdb_id=0) }}".replace(/0$/, "");
+
+        const state = {
+            query: "",
+            activeMethod: "lsh",
+            cache: {
+                cosine: null,
+                lsh: null,
+            },
+            chart: null,
+        };
+
+        const defaultEmptyStateHtml =
+            "<h3>Start by searching your favorite movie</h3>" +
+            "<p>Use the search bar above and switch between Cosine Similarity and LSH to compare results.</p>";
+
+        function escapeHtml(value) {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function formatMs(value) {
+            return Number.isFinite(value) ? value.toFixed(3) + " ms" : "-- ms";
+        }
+
+        function toNumber(value) {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : NaN;
+        }
+
+        function getMethodDisplayName(method) {
+            return method === "lsh" ? "LSH" : "Cosine Similarity";
+        }
+
+        function setActiveButton(method) {
+            toggleButtons.forEach((button) => {
+                const isActive = button.dataset.method === method;
+                button.classList.toggle("is-active", isActive);
+                button.setAttribute("aria-pressed", isActive ? "true" : "false");
+            });
+
+            if (activeModelMeta) {
+                activeModelMeta.textContent = "Active Model: " + getMethodDisplayName(method);
+            }
+        }
+
+        function renderMovieGrid(items) {
+            if (!Array.isArray(items) || items.length === 0) {
+                emptyState.innerHTML = defaultEmptyStateHtml;
+                movieGrid.classList.add("is-hidden");
+                emptyState.classList.remove("is-hidden");
+                return;
+            }
+
+            const cards = items
+                .map((movie) => {
+                    const title = escapeHtml(movie.title || "Untitled");
+                    const tmdbId = escapeHtml(movie.tmdb_id || "");
+                    const detailUrl = movieDetailBase + tmdbId;
+                    const poster = movie.poster_url
+                        ? '<img src="' + escapeHtml(movie.poster_url) + '" alt="' + title + ' poster" loading="lazy">'
+                        : '<div class="poster-fallback">No Poster</div>';
+
+                    return [
+                        '<article class="saas-movie-card">',
+                        '<a class="poster-link" href="' + detailUrl + '">',
+                        poster,
+                        "</a>",
+                        '<div class="card-body">',
+                        "<h2>" + title + "</h2>",
+                        '<a class="btn-secondary" href="' + detailUrl + '">View Trailer</a>',
+                        "</div>",
+                        "</article>",
+                    ].join("");
+                })
+                .join("");
+
+            movieGrid.innerHTML = cards;
+            movieGrid.classList.remove("is-hidden");
+            emptyState.classList.add("is-hidden");
+        }
+
+        function renderPerformance() {
+            const cosineRuntime = state.cache.cosine ? toNumber(state.cache.cosine.runtime_ms) : NaN;
+            const lshRuntime = state.cache.lsh ? toNumber(state.cache.lsh.runtime_ms) : NaN;
+
+            cosineTimeValue.textContent = formatMs(cosineRuntime);
+            lshTimeValue.textContent = formatMs(lshRuntime);
+
+            if (Number.isFinite(cosineRuntime) && Number.isFinite(lshRuntime) && lshRuntime > 0) {
+                const ratio = cosineRuntime / lshRuntime;
+                speedRatioValue.textContent = ratio.toFixed(2) + "x";
+            } else {
+                speedRatioValue.textContent = "--";
+            }
+
+            const activeData = state.cache[state.activeMethod];
+            if (activeData) {
+                const prettyMethod = getMethodDisplayName(state.activeMethod);
+                activeModelMeta.textContent = "Active Model: " + prettyMethod;
+                activeModelRuntime.textContent = "Runtime: " + formatMs(toNumber(activeData.runtime_ms));
+            } else {
+                activeModelRuntime.textContent = "Runtime: -- ms";
+            }
+
+            updateChart(cosineRuntime, lshRuntime);
+        }
+
+        function updateChart(cosineRuntime, lshRuntime) {
+            if (!chartCanvas || typeof Chart === "undefined") {
+                return;
+            }
+
+            const cosineValue = Number.isFinite(cosineRuntime) ? cosineRuntime : 0;
+            const lshValue = Number.isFinite(lshRuntime) ? lshRuntime : 0;
+
+            const payload = {
+                labels: ["Cosine Similarity", "LSH"],
+                datasets: [
+                    {
+                        label: "Runtime (ms)",
+                        data: [cosineValue, lshValue],
+                        backgroundColor: ["rgba(251, 113, 133, 0.78)", "rgba(56, 189, 248, 0.78)"],
+                        borderColor: ["rgba(251, 113, 133, 1)", "rgba(56, 189, 248, 1)"],
+                        borderWidth: 1,
+                        borderRadius: 12,
+                    },
+                ],
+            };
+
+            if (state.chart) {
+                state.chart.data = payload;
+                state.chart.update();
+                return;
+            }
+
+            state.chart = new Chart(chartCanvas, {
+                type: "bar",
+                data: payload,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: "#dbe7ff",
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: "#c9d7ff",
+                            },
+                            grid: {
+                                color: "rgba(173, 200, 255, 0.1)",
+                            },
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: "Milliseconds",
+                                color: "#dbe7ff",
+                            },
+                            ticks: {
+                                color: "#c9d7ff",
+                            },
+                            grid: {
+                                color: "rgba(173, 200, 255, 0.1)",
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        async function fetchRecommendations(query, method) {
+            const body = new URLSearchParams({
+                movie_name: query,
+                method: method,
+            });
+
+            const response = await fetch(recommendUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    Accept: "application/json",
+                },
+                body: body.toString(),
+            });
+
+            const data = await response.json().catch(function () {
+                return {};
+            });
+
+            if (!response.ok) {
+                throw new Error(data.error || "Unable to fetch recommendations.");
+            }
+
+            return data;
+        }
+
+        function renderActiveMethod() {
+            const activeData = state.cache[state.activeMethod];
+            if (!activeData) {
+                return;
+            }
+
+            renderMovieGrid(activeData.results || []);
+            const methodLabel = state.activeMethod === "lsh" ? "LSH" : "Cosine Similarity";
+            resultsSummary.textContent = "Showing " + methodLabel + " recommendations for \"" + state.query + "\".";
+            renderPerformance();
+        }
+
+        async function runSearch(query) {
+            searchButton.disabled = true;
+            searchButton.textContent = "Searching...";
+            resultsSummary.textContent = "Fetching recommendations for \"" + query + "\"...";
+
+            const [cosineResult, lshResult] = await Promise.allSettled([
+                fetchRecommendations(query, "cosine"),
+                fetchRecommendations(query, "lsh"),
+            ]);
+
+            state.cache.cosine = cosineResult.status === "fulfilled" ? cosineResult.value : null;
+            state.cache.lsh = lshResult.status === "fulfilled" ? lshResult.value : null;
+
+            if (!state.cache.cosine && !state.cache.lsh) {
+                const reason = cosineResult.status === "rejected"
+                    ? cosineResult.reason
+                    : lshResult.reason;
+                throw reason instanceof Error ? reason : new Error("Search failed.");
+            }
+
+            if (!state.cache[state.activeMethod]) {
+                state.activeMethod = state.cache.lsh ? "lsh" : "cosine";
+            }
+
+            setActiveButton(state.activeMethod);
+            renderActiveMethod();
+        }
+
+        toggleButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                const method = button.dataset.method;
+                if (!method) {
+                    return;
+                }
+
+                state.activeMethod = method;
+                setActiveButton(method);
+
+                if (state.cache[method]) {
+                    renderActiveMethod();
+                } else {
+                    activeModelRuntime.textContent = "Runtime: -- ms";
+                }
+            });
+        });
+
+        searchForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const query = searchInput.value.trim();
+            if (!query) {
+                return;
+            }
+
+            state.query = query;
+
+            try {
+                await runSearch(query);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Unable to fetch recommendations.";
+                movieGrid.classList.add("is-hidden");
+                emptyState.classList.remove("is-hidden");
+                emptyState.innerHTML = "<h3>Recommendation failed</h3><p>" + escapeHtml(message) + "</p>";
+                resultsSummary.textContent = "Try another movie title to continue.";
+            } finally {
+                searchButton.disabled = false;
+                searchButton.textContent = "Search";
+            }
+        });
+
+        try {
+            const seed = seedNode ? JSON.parse(seedNode.textContent || "{}") : {};
+            const cosineSeed = Array.isArray(seed.cosine) && seed.cosine.length > 0
+                ? seed.cosine.reduce((acc, value) => acc + Number(value || 0), 0) / seed.cosine.length
+                : NaN;
+            const lshSeed = Array.isArray(seed.lsh) && seed.lsh.length > 0
+                ? seed.lsh.reduce((acc, value) => acc + Number(value || 0), 0) / seed.lsh.length
+                : NaN;
+            updateChart(cosineSeed, lshSeed);
+        } catch (error) {
+            updateChart(NaN, NaN);
+        }
+
+        setActiveButton(state.activeMethod);
+    })();
+</script>
+{% endif %}
+{% endblock %}
