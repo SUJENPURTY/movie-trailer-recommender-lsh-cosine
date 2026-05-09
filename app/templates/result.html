@@ -1,59 +1,408 @@
 {% extends "base.html" %}
 
-{% block title %}Recommendations | {{ query }}{% endblock %}
+{% block title %}Recommendations for {{ query }} | MovieMatchAI{% endblock %}
 
 {% block content %}
-<section class="result-head">
-    <p class="eyebrow">Top 5 Results</p>
-    <h1>Recommendations for "{{ query }}"</h1>
-    <p class="subtext">Method: <strong>{{ method|upper }}</strong></p>
-    {% if runtime_ms is not none %}
-    <p class="subtext">Runtime: <strong>{{ '%.2f'|format(runtime_ms) }} ms</strong></p>
-    {% endif %}
-    <div class="method-switch">
-        <form action="{{ url_for('recommend') }}" method="post">
-            <input type="hidden" name="movie_name" value="{{ query }}">
-            <button type="submit" name="method" value="lsh"
-                class="switch-btn {% if method == 'lsh' %}active{% endif %}">
-                Try LSH
-            </button>
-        </form>
-        <form action="{{ url_for('recommend') }}" method="post">
-            <input type="hidden" name="movie_name" value="{{ query }}">
-            <button type="submit" name="method" value="cosine"
-                class="switch-btn {% if method == 'cosine' %}active{% endif %}">
-                Try Cosine
-            </button>
-        </form>
-    </div>
-    <a class="ghost-link" href="{{ url_for('home') }}">Search another movie</a>
-</section>
+<section class="pt-32 pb-20 px-4 min-h-screen relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#030307]/50 to-[#0a0a0f] pointer-events-none"></div>
+    <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#ff2d55]/10 rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#00d4ff]/10 rounded-full blur-[100px]"></div>
+    
+    <div class="max-w-7xl mx-auto relative z-10">
+        <div class="rounded-3xl bg-gradient-to-b from-white/[0.06] to-transparent border border-white/[0.08] p-8 md:p-10 mb-10 backdrop-blur-xl" data-aos="fade-up">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+                <div>
+                    <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#ff2d55]/10 border border-[#ff2d55]/20 mb-4">
+                        <i class="fas fa-magic text-sm" style="color: #ff2d55;"></i>
+                        <span class="text-[#ff2d55] text-sm font-semibold uppercase tracking-wider">Top Results</span>
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-bold mt-2 mb-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Recommendations for "{{ query }}"</h1>
+                    <div class="flex flex-wrap items-center gap-6 text-gray-400">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Method: <strong class="text-white font-semibold">{{ method|upper }}</strong></span>
+                        </div>
+                        {% if runtime_ms is not none %}
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-bolt" style="color: #ff2d55;"></i>
+                            <span>Runtime: <strong class="text-[#ff2d55] font-bold text-lg">{{ '%.2f'|format(runtime_ms) }} ms</strong></span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
 
-{% if error %}
-<section class="message error">
-    <h2>Could not fetch recommendations</h2>
-    <p>{{ error }}</p>
-</section>
-{% endif %}
+                <div class="flex flex-wrap gap-3">
+                    <form action="{{ url_for('recommend') }}" method="post">
+                        <input type="hidden" name="movie_name" value="{{ query }}">
+                        <button type="submit" name="method" value="lsh" class="group px-5 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-gray-400 font-semibold hover:border-[#ff2d55]/50 hover:text-white hover:bg-white/[0.08] transition-all duration-300 flex items-center gap-2.5 {% if method == 'lsh' %}border-[#ff2d55] text-white bg-[#ff2d55]/10{% endif %}">
+                            <i class="fas fa-bolt group-hover:scale-110 transition-transform duration-200"></i> Try LSH
+                        </button>
+                    </form>
+                    <form action="{{ url_for('recommend') }}" method="post">
+                        <input type="hidden" name="movie_name" value="{{ query }}">
+                        <button type="submit" name="method" value="cosine" class="group px-5 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-gray-400 font-semibold hover:border-[#ff2d55]/50 hover:text-white hover:bg-white/[0.08] transition-all duration-300 flex items-center gap-2.5 {% if method == 'cosine' %}border-[#ff2d55] text-white bg-[#ff2d55]/10{% endif %}">
+                            <i class="fas fa-bullseye group-hover:scale-110 transition-transform duration-200"></i> Try Cosine
+                        </button>
+                    </form>
+                </div>
+            </div>
 
-{% if recommendations %}
-<section class="card-grid">
-    {% for movie in recommendations %}
-    <article class="movie-card">
-        <a class="poster-link" href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}">
-            {% if movie.poster_url %}
-            <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" loading="lazy">
-            {% else %}
-            <div class="poster-fallback">No Poster</div>
-            {% endif %}
-        </a>
-        <div class="card-body">
-            <h2>{{ movie.title }}</h2>
-            <p>Score: {{ '%.4f'|format(movie.score) }}</p>
-            <a class="btn-secondary" href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}">View Trailer</a>
+            <a href="{{ url_for('home') }}" class="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/[0.05] transition-all duration-200 font-medium">
+                <i class="fas fa-arrow-left"></i> Search another movie
+            </a>
         </div>
-    </article>
-    {% endfor %}
+
+        {% if error %}
+        <div class="rounded-3xl bg-red-500/10 border border-red-500/30 p-10 text-center backdrop-blur-xl mb-10" data-aos="fade-up">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-3 text-white">Could not fetch recommendations</h2>
+            <p class="text-gray-400 max-w-md mx-auto">{{ error }}</p>
+        </div>
+        {% endif %}
+
+        {% if recommendations %}
+        <div class="mb-10" data-aos="fade-up">
+            <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#ff2d55]/10 border border-[#ff2d55]/20 mb-4">
+                <i class="fas fa-clapperboard text-sm" style="color: #ff2d55;"></i>
+                <span class="text-[#ff2d55] text-sm font-semibold uppercase tracking-wider">Your Picks</span>
+            </div>
+            <h2 class="text-3xl font-bold mb-3 text-white">Recommended Movies</h2>
+            <p class="text-gray-400 text-lg">Movies similar to "{{ query }}" based on {{ method|upper }} similarity</p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 mb-16">
+            {% for movie in recommendations %}
+            <div class="group relative rounded-2xl overflow-hidden bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.06] transition-all duration-500 hover:border-[#ff2d55]/50 hover:shadow-[0_25px_70px_rgba(255,45,85,0.25),0_0_50px_rgba(255,45,85,0.1)] hover:-translate-y-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+                <div class="aspect-[2/3] bg-[#151520] relative overflow-hidden cursor-pointer" onclick="showMovieDetails('{{ movie.tmdb_id }}', '{{ movie.title|escape }}')">
+                    {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-full object-cover transition-all duration-700 group-hover:scale-125 group-hover:brightness-110" loading="lazy">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <i class="fas fa-film text-5xl text-gray-700"></i>
+                    </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#030307] via-[#030307]/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <button class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500" onclick="event.stopPropagation(); openTrailerForMovie('{{ movie.tmdb_id }}')">
+                        <div class="w-18 h-18 rounded-2xl bg-[#ff2d55] flex items-center justify-center shadow-[0_0_60px_rgba(255,45,85,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <i class="fas fa-play text-2xl text-white ml-1.5"></i>
+                        </div>
+                    </button>
+                    
+                    <div class="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/80 backdrop-blur-xl border border-white/10">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fas fa-fingerprint text-xs" style="color: #ff2d55;"></i>
+                            <span class="text-sm font-bold text-white">{{ '%.4f'|format(movie.score) }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if loop.index0 == 0 %}
+                    <div class="absolute top-4 left-4 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#ff2d55] to-[#cc2244] text-xs font-bold text-white shadow-lg">
+                        #1 Match
+                    </div>
+                    {% endif %}
+                    
+                    <div class="absolute bottom-0 left-0 right-0 p-5 translate-y-3 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500">
+                        <h3 class="text-base font-bold text-white truncate mb-2">{{ movie.title }}</h3>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1.5">
+                                <i class="fas fa-chart-line text-xs" style="color: #ff2d55;"></i>
+                                <span class="text-xs font-semibold text-[#ff2d55]">{{ '%.1f'|format(movie.score * 100) }}% Match</span>
+                            </div>
+                            <span class="text-xs text-gray-500 font-medium">#{{ loop.index }}</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}" class="block p-4 bg-white/[0.02] border-t border-white/[0.04] hover:bg-[#ff2d55]/5 transition-all duration-300">
+                    <span class="text-sm font-medium text-gray-400 group-hover:text-white transition-colors duration-200 flex items-center justify-center gap-2">
+                        <i class="fas fa-info-circle"></i> View Details
+                    </span>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+            <div class="group relative rounded-2xl bg-gradient-to-b from-white/[0.05] to-transparent border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#ff2d55]/40 hover:-translate-y-2 transition-all duration-500" data-aos="fade-up" data-aos-delay="100">
+                <div class="absolute inset-0 bg-gradient-to-b from-[#ff2d55]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                <div class="relative">
+                    <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-[#ff2d55] to-[#cc2244] flex items-center justify-center shadow-[0_0_30px_rgba(255,45,85,0.4)]">
+                        <i class="fas fa-layer-group text-2xl text-white"></i>
+                    </div>
+                    <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Algorithm</p>
+                    <p class="text-3xl font-bold text-white">{{ method|upper }}</p>
+                </div>
+            </div>
+            <div class="group relative rounded-2xl bg-gradient-to-b from-white/[0.05] to-transparent border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#00d4ff]/40 hover:-translate-y-2 transition-all duration-500" data-aos="fade-up" data-aos-delay="200">
+                <div class="absolute inset-0 bg-gradient-to-b from-[#00d4ff]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                <div class="relative">
+                    <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-[#00d4ff] to-[#0099cc] flex items-center justify-center shadow-[0_0_30px_rgba(0,212,255,0.4)]">
+                        <i class="fas fa-film text-2xl text-white"></i>
+                    </div>
+                    <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Results</p>
+                    <p class="text-3xl font-bold text-[#00d4ff]">{{ recommendations|length }} Movies</p>
+                </div>
+            </div>
+            <div class="group relative rounded-2xl bg-gradient-to-b from-white/[0.05] to-transparent border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#10b981]/40 hover:-translate-y-2 transition-all duration-500" data-aos="fade-up" data-aos-delay="300">
+                <div class="absolute inset-0 bg-gradient-to-b from-[#10b981]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                <div class="relative">
+                    <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-[#10b981] to-[#059669] flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)]">
+                        <i class="fas fa-bolt text-2xl text-white"></i>
+                    </div>
+                    <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Performance</p>
+                    <p class="text-3xl font-bold text-[#10b981]">{{ '%.2f'|format(runtime_ms) }} ms</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-3xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] p-10 backdrop-blur-xl text-center" data-aos="fade-up">
+            <h3 class="text-2xl font-bold mb-4 text-white">Want to compare algorithms?</h3>
+            <p class="text-gray-400 mb-8 max-w-lg mx-auto">Switch between LSH and Cosine Similarity to see how the recommendations differ.</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <form action="{{ url_for('recommend') }}" method="post">
+                    <input type="hidden" name="movie_name" value="{{ query }}">
+                    <button type="submit" name="method" value="lsh" class="group relative px-8 py-4 rounded-2xl bg-gradient-to-r from-[#ff2d55] to-[#cc2244] text-white font-bold shadow-[0_4px_30px_rgba(255,45,85,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_50px_rgba(255,45,85,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] hover:-translate-y-2 active:translate-y-0 transition-all duration-300 flex items-center gap-3 {% if method == 'lsh' %}ring-2 ring-white/30{% endif %}">
+                        <i class="fas fa-bolt group-hover:scale-110 transition-transform duration-200"></i> Try LSH
+                    </button>
+                </form>
+                <form action="{{ url_for('recommend') }}" method="post">
+                    <input type="hidden" name="movie_name" value="{{ query }}">
+                    <button type="submit" name="method" value="cosine" class="group px-8 py-4 rounded-2xl bg-white/[0.05] border border-white/[0.1] text-white font-semibold hover:bg-white/[0.1] hover:border-white/30 transition-all duration-300 flex items-center gap-3 {% if method == 'cosine' %}border-[#ff2d55] bg-[#ff2d55]/10{% endif %}">
+                        <i class="fas fa-bullseye group-hover:scale-110 transition-transform duration-200"></i> Try Cosine
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not error and not recommendations %}
+        <div class="rounded-3xl bg-white/[0.03] border border-white/[0.08] p-16 text-center backdrop-blur-xl" data-aos="fade-up">
+            <div class="w-24 h-24 mx-auto mb-6 rounded-2xl bg-white/[0.05] flex items-center justify-center">
+                <i class="fas fa-film text-5xl text-gray-600"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-3 text-white">No recommendations found</h3>
+            <p class="text-gray-500 max-w-md mx-auto mb-8">We couldn't find any movies similar to "{{ query }}". Try searching for a different movie.</p>
+            <a href="{{ url_for('home') }}" class="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#ff2d55] to-[#cc2244] text-white font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <i class="fas fa-search"></i> Try Another Search
+            </a>
+        </div>
+        {% endif %}
+    </div>
 </section>
-{% endif %}
+
+<script>
+function openTrailerForMovie(tmdbId) {
+    fetch('/movie/' + tmdbId + '?format=json')
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.trailer_key) {
+                openTrailerModal(data.trailer_key);
+            } else if (typeof showToast === 'function') {
+                showToast('No trailer available for this movie', 'error');
+            }
+        })
+        .catch(function() {
+            if (typeof showToast === 'function') {
+                showToast('Could not load trailer', 'error');
+            }
+        });
+}
+
+function showMovieDetails(tmdbId, title) {
+    window.location.href = '/movie/' + tmdbId;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.group');
+    cards.forEach(function(card) {
+        card.addEventListener('mouseenter', function() {
+            card.querySelector('.bg-gradient-to-t')?.classList.add('opacity-100');
+        });
+        card.addEventListener('mouseleave', function() {
+            card.querySelector('.bg-gradient-to-t')?.classList.remove('opacity-100');
+        });
+    });
+});
+</script>
+{% endblock %}
+                            <i class="fas fa-star text-yellow-400 text-xs"></i>
+                            <span class="text-sm font-bold text-white">{{ '%.4f'|format(movie.score) }}</span>
+                        </div>
+                    </div>
+                    {% if loop.index0 == 0 %}
+                    <div class="absolute top-3 left-3 px-2 py-1 rounded-lg bg-gradient-to-r from-neon to-red-600 text-xs font-bold text-white" style="background: linear-gradient(135deg, #ff2d55, #cc2244);">
+                        #1 Match
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <h3 class="text-sm font-semibold text-white truncate mb-2">{{ movie.title }}</h3>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1 text-xs text-gray-500">
+                            <i class="fas fa-fingerprint text-neon" style="color: #ff2d55;"></i>
+                            <span>{{ '%.2f'|format(movie.score * 100) }}%</span>
+                        </div>
+                        <span class="text-xs text-gray-600">#{{ loop.index }}</span>
+                    </div>
+                    <a href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}" class="mt-3 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-400 text-sm font-medium hover:bg-neon hover:border-neon hover:text-white transition-all duration-200">
+                        <i class="fas fa-play"></i> View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="rounded-2xl bg-white/5 border border-white/10 p-6 text-center backdrop-blur-sm hover:border-neon/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-neon to-red-700 flex items-center justify-center" style="background: linear-gradient(135deg, #ff2d55, #cc2244);">
+                    <i class="fas fa-layer-group text-xl text-white"></i>
+                </div>
+                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Algorithm</p>
+                <p class="text-2xl font-bold text-neon" style="color: #ff2d55;">{{ method|upper }}</p>
+            </div>
+            <div class="rounded-2xl bg-white/5 border border-white/10 p-6 text-center backdrop-blur-sm hover:border-cyan-400/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-700 flex items-center justify-center" style="background: linear-gradient(135deg, #00d4ff, #0099cc);">
+                    <i class="fas fa-film text-xl text-white"></i>
+                </div>
+                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Results</p>
+                <p class="text-2xl font-bold text-cyan-400">{{ recommendations|length }} Movies</p>
+            </div>
+            <div class="rounded-2xl bg-white/5 border border-white/10 p-6 text-center backdrop-blur-sm hover:border-green-400/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-bolt text-xl text-white"></i>
+                </div>
+                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">Performance</p>
+                <p class="text-2xl font-bold text-green-400">{{ '%.2f'|format(runtime_ms) }} ms</p>
+            </div>
+        </div>
+
+        <div class="rounded-2xl bg-white/5 border border-white/10 p-6 md:p-8 backdrop-blur-sm mb-12" data-aos="fade-up">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="inline-flex items-center gap-2 text-neon font-semibold uppercase tracking-wider text-sm" style="color: #ff2d55;">
+                    <i class="fas fa-chart-pie"></i> Insights
+                </span>
+                <h3 class="text-xl font-bold">Recommendation Summary</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="text-gray-400 text-sm font-medium uppercase tracking-wider mb-4">Match Quality Distribution</h4>
+                    <div class="space-y-3">
+                        {% for movie in recommendations[:5] %}
+                        <div class="flex items-center gap-4">
+                            <span class="text-gray-500 text-sm w-6">#{{ loop.index }}</span>
+                            <div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-1000" style="width: {{ (movie.score * 100) }}%; background: linear-gradient(90deg, #ff2d55, #ff6b8a);"></div>
+                            </div>
+                            <span class="text-neon text-sm font-medium" style="color: #ff2d55;">{{ '%.1f'|format(movie.score * 100) }}%</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-gray-400 text-sm font-medium uppercase tracking-wider mb-4">Algorithm Analysis</h4>
+                    <div class="space-y-4">
+                        <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300 font-medium">Method Used</span>
+                                <span class="px-2 py-1 rounded-lg bg-neon/20 text-neon text-sm font-bold" style="color: #ff2d55; background: rgba(255,45,85,0.2);">{{ method|upper }}</span>
+                            </div>
+                            <p class="text-gray-500 text-sm">
+                                {% if method == 'lsh' %}
+                                Locality Sensitive Hashing provides near-instant recommendations by bucketing similar vectors, making it ideal for large datasets.
+                                {% else %}
+                                Cosine Similarity computes exact vector angles for maximum accuracy, comparing every movie against the query.
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-300 font-medium">Processing Time</span>
+                                <span class="text-cyan-400 text-sm font-bold">{{ '%.2f'|format(runtime_ms) }} ms</span>
+                            </div>
+                            <p class="text-gray-500 text-sm">
+                                {% if runtime_ms < 10 %}
+                                Excellent performance! The algorithm returned results in under 10 milliseconds.
+                                {% elif runtime_ms < 50 %}
+                                Good performance! Results were generated in under 50 milliseconds.
+                                {% else %}
+                                Standard processing time for this dataset size.
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-6 md:p-8 backdrop-blur-sm text-center" data-aos="fade-up">
+            <h3 class="text-xl font-bold mb-2">Want to compare algorithms?</h3>
+            <p class="text-gray-400 mb-6 max-w-lg mx-auto">Switch between LSH and Cosine Similarity to see how the recommendations differ.</p>
+            <div class="flex flex-wrap justify-center gap-3">
+                <form action="{{ url_for('recommend') }}" method="post">
+                    <input type="hidden" name="movie_name" value="{{ query }}">
+                    <button type="submit" name="method" value="lsh" class="px-6 py-3 rounded-xl bg-gradient-to-r from-neon to-red-700 text-white font-semibold shadow-lg shadow-neon/30 hover:shadow-neon/50 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 {% if method == 'lsh' %}ring-2 ring-white{% endif %}" style="background: linear-gradient(135deg, #ff2d55, #cc2244);">
+                        <i class="fas fa-bolt"></i> Try LSH
+                    </button>
+                </form>
+                <form action="{{ url_for('recommend') }}" method="post">
+                    <input type="hidden" name="movie_name" value="{{ query }}">
+                    <button type="submit" name="method" value="cosine" class="px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 hover:border-white/40 transition-all duration-300 flex items-center gap-2 {% if method == 'cosine' %}ring-2 ring-neon{% endif %}" style="{% if method == 'cosine' %}border-color: #ff2d55;{% endif %}">
+                        <i class="fas fa-bullseye"></i> Try Cosine
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not error and not recommendations %}
+        <div class="rounded-2xl bg-white/5 border border-white/10 p-12 text-center backdrop-blur-sm" data-aos="fade-up">
+            <i class="fas fa-film text-6xl text-gray-600 mb-4"></i>
+            <h3 class="text-2xl font-semibold mb-2">No recommendations found</h3>
+            <p class="text-gray-500 max-w-md mx-auto mb-6">We couldn't find any movies similar to "{{ query }}". Try searching for a different movie.</p>
+            <a href="{{ url_for('home') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-neon to-red-700 text-white font-semibold shadow-lg shadow-neon/30 hover:shadow-neon/50 hover:-translate-y-0.5 transition-all duration-300" style="background: linear-gradient(135deg, #ff2d55, #cc2244);">
+                <i class="fas fa-search"></i> Try Another Search
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+function openTrailerForMovie(tmdbId) {
+    fetch('/movie/' + tmdbId + '?format=json')
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.trailer_key) {
+                openTrailerModal(data.trailer_key);
+            } else if (typeof showToast === 'function') {
+                showToast('No trailer available for this movie', 'error');
+            }
+        })
+        .catch(function() {
+            if (typeof showToast === 'function') {
+                showToast('Could not load trailer', 'error');
+            }
+        });
+}
+
+function showMovieDetails(tmdbId, title) {
+    window.location.href = '/movie/' + tmdbId;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.group');
+    cards.forEach(function(card) {
+        card.addEventListener('mouseenter', function() {
+            card.querySelector('.bg-gradient-to-t')?.classList.add('opacity-100');
+        });
+        card.addEventListener('mouseleave', function() {
+            card.querySelector('.bg-gradient-to-t')?.classList.remove('opacity-100');
+        });
+    });
+});
+</script>
 {% endblock %}

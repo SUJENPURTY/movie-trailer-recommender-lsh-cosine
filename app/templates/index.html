@@ -1,468 +1,668 @@
 {% extends "base.html" %}
 
-{% block title %}MovieMatchAI | Startup-Grade Movie Recommendations{% endblock %}
+{% block title %}MovieMatchAI | Discover Movies You'll Actually Love{% endblock %}
 
 {% block content %}
-{% set movies = movies if movies is defined else [] %}
+{% set movies = browse_movies if browse_movies is defined else [] %}
 {% set has_movies = movies|length > 0 %}
 
-<section class="saas-homepage" id="explore">
-    <section class="saas-hero glass-panel">
-        <p class="eyebrow">Movie Recommendation System</p>
-        <h1>Find Movies You’ll Love Instantly</h1>
-        <p class="saas-hero__subtext">
-            Powered by LSH &amp; Cosine Similarity for fast and accurate recommendations
+<section class="relative min-h-[85vh] flex items-center justify-center pt-20 pb-16 px-4 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#030307]/60 to-[#030307] pointer-events-none"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(255,45,85,0.2),transparent),radial-gradient(ellipse_60%_40%_at_80%_60%,rgba(0,212,255,0.15),transparent),radial-gradient(ellipse_50%_30%_at_20%_80%,rgba(168,85,247,0.1),transparent)]"></div>
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-[#ff2d55]/10 rounded-full blur-[100px] animate-pulse"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#00d4ff]/10 rounded-full blur-[80px] animate-pulse" style="animation-delay: 1s;"></div>
+    
+    <div class="relative z-10 max-w-4xl mx-auto text-center">
+        <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl mb-6 hover:bg-white/[0.08] transition-all duration-300" data-aos="fade-down">
+            <div class="w-2 h-2 rounded-full bg-[#ff2d55] animate-pulse"></div>
+            <i class="fas fa-sparkles text-sm" style="color: #ff2d55;"></i>
+            <span class="text-gray-300 text-sm font-medium tracking-wide">AI-Powered Recommendations</span>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.15]" data-aos="fade-up" data-aos-delay="100">
+            <span class="text-gray-100">Discover Movies</span><br>
+            <span class="bg-gradient-to-r from-[#ff2d55] via-[#ff6b8a] to-[#00d4ff] bg-clip-text text-transparent" style="background: linear-gradient(135deg, #ff2d55 0%, #ff6b8a 50%, #00d4ff 100%); -webkit-background-clip: text;">You'll Actually Love</span>
+        </h1>
+
+        <p class="text-base md:text-lg text-gray-400 max-w-xl mx-auto mb-10 leading-relaxed" data-aos="fade-up" data-aos-delay="200">
+            Our AI uses <span class="text-[#00d4ff] font-semibold">LSH</span> and <span class="text-[#a855f7] font-semibold">Cosine Similarity</span> to find movies that match your unique taste. Get personalized recommendations in milliseconds.
         </p>
 
-        <form id="movieSearchForm" class="saas-search" action="{{ url_for('recommend') }}" method="post">
-            <div class="saas-search__field">
-                <input id="movieSearchInput" name="movie_name" type="text" placeholder="Search for a movie..."
-                    value="{{ request.args.get('movie_name', '') }}" list="movie-list" autocomplete="off" required>
+        <div id="search-section" class="search-container">
+        <form id="movieSearchForm" class="flex flex-col sm:flex-row items-center gap-4 max-w-lg mx-auto mb-8" action="{{ url_for('recommend') }}" method="post" data-aos="fade-up" data-aos-delay="300">
+            <div class="relative flex-1 w-full group">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-[#ff2d55] to-[#00d4ff] rounded-xl opacity-0 group-focus-within:50 blur-md transition-all duration-300 search-glow"></div>
+                <div class="relative">
+                    <input type="text" id="movieSearchInput" name="movie_name" placeholder="Search for a movie..." value="{{ request.args.get('movie_name', '') }}" list="movie-list" autocomplete="off" required
+                        class="w-full px-5 py-4 rounded-xl bg-[#0a0a0f]/80 border border-white/[0.08] text-white placeholder-gray-500 outline-none transition-all duration-300 focus:border-[#ff2d55]/50 focus:bg-[#0a0a0f] backdrop-blur-xl search-input"
+                        style="border-color: rgba(255,255,255,0.06);">
+                    <i class="fas fa-search absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#ff2d55] transition-colors duration-200"></i>
+                </div>
             </div>
             <datalist id="movie-list">
-                {% for title in movie_titles %}
+                {% for title in movie_titles[:100] %}
                 <option value="{{ title }}"></option>
                 {% endfor %}
             </datalist>
-            <button id="movieSearchButton" type="submit">Search</button>
+            <button type="submit" id="movieSearchButton"
+                class="relative px-7 py-4 rounded-xl bg-gradient-to-r from-[#ff2d55] to-[#cc2244] text-white font-semibold shadow-[0_4px_25px_rgba(255,45,85,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_45px_rgba(255,45,85,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
+                style="background: linear-gradient(135deg, #ff2d55 0%, #cc2244 100%);">
+                <i class="fas fa-magnifying-glass relative z-10"></i>
+                <span class="relative z-10">Search</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+            </button>
         </form>
-    </section>
+    </div>
 
-    {% if startup_error %}
-    <section class="message error">
-        <h2>Model Not Ready</h2>
-        <p>{{ startup_error }}</p>
-    </section>
-    {% else %}
-    <section class="saas-model-panel glass-panel">
-        <div class="saas-model-panel__row">
-            <p class="eyebrow">Model Selection</p>
-            <p id="activeModelMeta" class="saas-model-panel__meta">Active Model: LSH</p>
+        <div class="flex flex-wrap justify-center gap-2.5 mb-10" data-aos="fade-up" data-aos-delay="400">
+            <span class="px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] text-gray-500 text-sm cursor-pointer hover:border-[#ff2d55]/40 hover:text-gray-300 hover:bg-white/[0.08] transition-all duration-300">Avatar</span>
+            <span class="px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] text-gray-500 text-sm cursor-pointer hover:border-[#ff2d55]/40 hover:text-gray-300 hover:bg-white/[0.08] transition-all duration-300">Inception</span>
+            <span class="px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] text-gray-500 text-sm cursor-pointer hover:border-[#ff2d55]/40 hover:text-gray-300 hover:bg-white/[0.08] transition-all duration-300">The Dark Knight</span>
+            <span class="px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] text-gray-500 text-sm cursor-pointer hover:border-[#ff2d55]/40 hover:text-gray-300 hover:bg-white/[0.08] transition-all duration-300">Interstellar</span>
+            <span class="px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] text-gray-500 text-sm cursor-pointer hover:border-[#ff2d55]/40 hover:text-gray-300 hover:bg-white/[0.08] transition-all duration-300">Titanic</span>
+            <span class="px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] text-gray-500 text-sm cursor-pointer hover:border-[#ff2d55]/40 hover:text-gray-300 hover:bg-white/[0.08] transition-all duration-300">Avengers</span>
         </div>
 
-        <div class="saas-toggle" role="group" aria-label="Recommendation model">
-            <button type="button" class="saas-toggle__btn" data-method="cosine">Cosine Similarity</button>
-            <button type="button" class="saas-toggle__btn is-active" data-method="lsh">LSH</button>
-        </div>
-        <p id="activeModelRuntime" class="saas-model-panel__runtime">Runtime: -- ms</p>
-    </section>
-
-    <section class="saas-performance-grid">
-        <article class="saas-metric glass-panel">
-            <p class="saas-metric__label">Cosine Time</p>
-            <p id="cosineTimeValue" class="saas-metric__value">-- ms</p>
-        </article>
-        <article class="saas-metric glass-panel">
-            <p class="saas-metric__label">LSH Time</p>
-            <p id="lshTimeValue" class="saas-metric__value">-- ms</p>
-        </article>
-        <article class="saas-metric glass-panel">
-            <p class="saas-metric__label">Speed Ratio</p>
-            <p id="speedRatioValue" class="saas-metric__value">--</p>
-        </article>
-    </section>
-
-    <section class="saas-chart-panel glass-panel">
-        <div class="saas-chart-panel__head">
-            <div>
-                <p class="eyebrow">Graph Section</p>
-                <h2>Cosine vs LSH Runtime Comparison</h2>
+        <div class="flex flex-wrap justify-center gap-6" data-aos="fade-up" data-aos-delay="500">
+            <div class="flex items-center gap-2.5 text-gray-500">
+                <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <i class="fas fa-bolt text-green-400 text-sm"></i>
+                </div>
+                <span class="text-sm font-medium">Fast Recommendations</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-gray-500">
+                <div class="w-8 h-8 rounded-lg bg-[#ff2d55]/10 flex items-center justify-center">
+                    <i class="fas fa-brain text-sm" style="color: #ff2d55;"></i>
+                </div>
+                <span class="text-sm font-medium">AI Powered</span>
+            </div>
+            <div class="flex items-center gap-2.5 text-gray-500">
+                <div class="w-8 h-8 rounded-lg bg-[#00d4ff]/10 flex items-center justify-center">
+                    <i class="fas fa-film text-cyan-400 text-sm"></i>
+                </div>
+                <span class="text-sm font-medium">10k+ Movies</span>
             </div>
         </div>
-        <div class="saas-chart-wrap">
-            <canvas id="runtimeComparisonChart" aria-label="Cosine and LSH runtime comparison chart"></canvas>
+    </div>
+    
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce">
+        <div class="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-2">
+            <div class="w-1.5 h-3 rounded-full bg-white/40 animate-pulse"></div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <section class="saas-interpretation glass-panel" id="about">
-        <p class="eyebrow">Interpretation</p>
-        <h2>Understanding Accuracy vs Speed</h2>
-        <p>
-            Cosine Similarity provides highly accurate recommendations but is computationally expensive.
-        </p>
-        <p>
-            Locality Sensitive Hashing (LSH) significantly reduces computation time by approximating nearest neighbors,
-            making it scalable for large datasets.
-        </p>
-        <p>Thus:</p>
-        <ul>
-            <li>Use Cosine for accuracy</li>
-            <li>Use LSH for speed</li>
-        </ul>
-    </section>
-    {% endif %}
+{% if startup_error %}
+<section class="py-20 px-4">
+    <div class="max-w-3xl mx-auto">
+        <div class="rounded-3xl bg-red-500/10 border border-red-500/30 p-10 text-center backdrop-blur-xl">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-3 text-white">Model Not Ready</h2>
+            <p class="text-gray-400">{{ startup_error }}</p>
+        </div>
+    </div>
+</section>
+{% else %}
+<section id="performance" class="py-24 px-4 bg-gradient-to-b from-[#0a0a0f] to-[#050508]">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#ff2d55]/10 border border-[#ff2d55]/20 mb-6">
+                <i class="fas fa-layer-group text-sm" style="color: #ff2d55;"></i>
+                <span class="text-[#ff2d55] text-sm font-semibold uppercase tracking-wider">Model Selection</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold mt-3 mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Choose Your Algorithm</h2>
+            <p class="text-gray-400 max-w-xl mx-auto text-lg">Compare LSH and Cosine Similarity performance in real-time</p>
+        </div>
 
-    <section class="saas-results" id="results">
-        <div class="saas-results__head">
-            <p class="eyebrow">Recommended Movies</p>
-            <h2>Netflix-Style Discover Feed</h2>
-            <p id="resultsSummary" class="subtext">
-                {% if has_movies %}
-                Showing initial recommendations.
-                {% else %}
-                Start by searching your favorite movie
-                {% endif %}
+        <div class="rounded-3xl bg-white/[0.04] border border-white/[0.08] p-8 mb-10 backdrop-blur-xl" data-aos="fade-up" data-aos-delay="100">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
+                <p class="text-white font-semibold text-lg">
+                    <i class="fas fa-microchip mr-3" style="color: #ff2d55;"></i>
+                    <span id="activeModelMeta">Active Model: LSH</span>
+                </p>
+                <div class="flex rounded-xl bg-white/[0.04] p-1.5">
+                    <button type="button" class="toggle-btn px-6 py-2.5 rounded-lg text-gray-400 font-semibold transition-all duration-200" data-method="cosine">Cosine Similarity</button>
+                    <button type="button" class="toggle-btn px-6 py-2.5 rounded-lg text-white font-semibold transition-all duration-200 active" data-method="lsh" style="background: #ff2d55;">LSH</button>
+                </div>
+            </div>
+            <p class="text-gray-500">
+                <i class="fas fa-clock mr-3"></i>
+                <span id="activeModelRuntime">Runtime: -- ms</span>
             </p>
         </div>
 
-        <section id="emptyState" class="saas-empty-state glass-panel {% if has_movies %}is-hidden{% endif %}">
-            <h3>Start by searching your favorite movie</h3>
-            <p>Use the search bar above and switch between Cosine Similarity and LSH to compare results.</p>
-        </section>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="group relative rounded-2xl bg-white/[0.04] border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#ff2d55]/40 hover:-translate-y-2 transition-all duration-500" data-aos="fade-up" data-aos-delay="100">
+                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-3">Cosine Time</p>
+                <p class="text-4xl font-bold text-white" id="cosineTimeValue">-- ms</p>
+            </div>
+            <div class="group relative rounded-2xl bg-white/[0.04] border border-[#ff2d55]/30 p-8 text-center backdrop-blur-xl hover:-translate-y-2 transition-all duration-500" data-aos="fade-up" data-aos-delay="200" style="border-color: rgba(255,45,85,0.3);">
+                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-3">LSH Time</p>
+                <p class="text-4xl font-bold" id="lshTimeValue" style="color: #ff2d55;">-- ms</p>
+            </div>
+            <div class="group relative rounded-2xl bg-white/[0.04] border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#00d4ff]/40 hover:-translate-y-2 transition-all duration-500" data-aos="fade-up" data-aos-delay="300">
+                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider mb-3">Speed Ratio</p>
+                <p class="text-4xl font-bold text-[#00d4ff]" id="speedRatioValue">--x</p>
+            </div>
+        </div>
 
-        <div id="movieGrid" class="saas-movie-grid {% if not has_movies %}is-hidden{% endif %}">
-            {% for movie in movies %}
-            <article class="saas-movie-card">
-                <a class="poster-link" href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}">
-                    {% if movie.poster_url %}
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }} poster" loading="lazy">
-                    {% else %}
-                    <div class="poster-fallback">No Poster</div>
-                    {% endif %}
-                </a>
-                <div class="card-body">
-                    <h2>{{ movie.title }}</h2>
-                    <a class="btn-secondary" href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}">View
-                        Trailer</a>
+        <div class="rounded-3xl bg-white/[0.04] border border-white/[0.08] p-8 mb-10 backdrop-blur-xl" data-aos="fade-up">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#ff2d55]/10 border border-[#ff2d55]/20 mb-4">
+                        <i class="fas fa-chart-bar text-sm" style="color: #ff2d55;"></i>
+                        <span class="text-[#ff2d55] text-sm font-semibold uppercase tracking-wider">Runtime Comparison</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mt-2">Cosine vs LSH Performance</h3>
                 </div>
-            </article>
+            </div>
+            <div class="h-80">
+                <canvas id="runtimeComparisonChart" aria-label="Runtime comparison chart"></canvas>
+            </div>
+        </div>
+
+        <div class="rounded-3xl bg-white/[0.04] border border-white/[0.08] p-10 text-center backdrop-blur-xl" data-aos="fade-up">
+            <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-6">
+                <i class="fas fa-lightbulb text-sm text-yellow-500;"></i>
+                <span class="text-yellow-500 text-sm font-semibold uppercase tracking-wider">Understanding The Tradeoff</span>
+            </div>
+            <p class="text-gray-300 mb-6 max-w-2xl mx-auto leading-relaxed">
+                <strong class="text-white">Cosine Similarity</strong> provides highly accurate recommendations by computing exact vector similarity across all movies in the database.
+            </p>
+            <p class="text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+                <strong class="text-white">Locality Sensitive Hashing (LSH)</strong> dramatically reduces computation time by approximating nearest neighbors through hash-based bucketing, making it ideal for large-scale recommendations.
+            </p>
+            <div class="flex flex-wrap justify-center gap-8">
+                <div class="flex items-center gap-2.5 text-green-400 font-semibold">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Use Cosine for accuracy</span>
+                </div>
+                <div class="flex items-center gap-2.5 text-[#00d4ff] font-semibold">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Use LSH for speed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="how-it-works" class="py-24 px-4">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[#0a0a0f]/50 pointer-events-none"></div>
+    <div class="absolute top-1/2 left-1/4 w-96 h-96 bg-[#ff2d55]/5 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#00d4ff]/5 rounded-full blur-[80px]"></div>
+    
+    <div class="max-w-6xl mx-auto relative z-10">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#ff2d55]/10 border border-[#ff2d55]/20 mb-6">
+                <i class="fas fa-cogs text-sm" style="color: #ff2d55;"></i>
+                <span class="text-[#ff2d55] text-sm font-semibold uppercase tracking-wider">How It Works</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold mt-3 mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">The AI Pipeline</h2>
+            <p class="text-gray-400 max-w-xl mx-auto text-lg">From raw data to personalized recommendations in milliseconds</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="group relative rounded-2xl bg-white/[0.06] border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#ff2d55]/40 transition-all duration-500 hover:-translate-y-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#ff2d55] to-[#cc2244] flex items-center justify-center shadow-[0_0_40px_rgba(255,45,85,0.4)] group-hover:shadow-[0_0_60px_rgba(255,45,85,0.6)] group-hover:scale-110 transition-all duration-500">
+                    <i class="fas fa-database text-3xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-white">Data Processing</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">Clean and preprocess movie metadata from TMDB dataset with advanced NLP techniques</p>
+            </div>
+
+            <div class="group relative rounded-2xl bg-white/[0.06] border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#00d4ff]/40 transition-all duration-500 hover:-translate-y-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#00d4ff] to-[#0099cc] flex items-center justify-center shadow-[0_0_40px_rgba(0,212,255,0.4)] group-hover:shadow-[0_0_60px_rgba(0,212,255,0.6)] group-hover:scale-110 transition-all duration-500">
+                    <i class="fas fa-vector-square text-3xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-white">Vectorization</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">Transform movie features into high-dimensional TF-IDF vectors for similarity computation</p>
+            </div>
+
+            <div class="group relative rounded-2xl bg-white/[0.06] border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#a855f7]/40 transition-all duration-500 hover:-translate-y-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#a855f7] to-[#7c3aed] flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.4)] group-hover:shadow-[0_0_60px_rgba(168,85,247,0.6)] group-hover:scale-110 transition-all duration-500">
+                    <i class="fas fa-project-diagram text-3xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-white">Hash Indexing</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">Build LSH hash tables for lightning-fast approximate nearest neighbor search</p>
+            </div>
+
+            <div class="group relative rounded-2xl bg-white/[0.06] border border-white/[0.08] p-8 text-center backdrop-blur-xl hover:border-[#10b981]/40 transition-all duration-500 hover:-translate-y-3" data-aos="fade-up" data-aos-delay="400">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#10b981] to-[#059669] flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.4)] group-hover:shadow-[0_0_60px_rgba(16,185,129,0.6)] group-hover:scale-110 transition-all duration-500">
+                    <i class="fas fa-bolt text-3xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3 text-white">Instant Results</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">Retrieve similar movies in milliseconds using advanced hash bucketing algorithms</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="recommendations" class="py-24 px-4 bg-gradient-to-b from-[#0a0a0f] to-[#050508]">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#ff2d55]/10 border border-[#ff2d55]/20 mb-6">
+                <i class="fas fa-clapperboard text-sm" style="color: #ff2d55;"></i>
+                <span class="text-[#ff2d55] text-sm font-semibold uppercase tracking-wider">Explore</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold mt-3 mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Trending Movies</h2>
+            <p class="text-gray-400 max-w-xl mx-auto text-lg">Browse our curated collection of popular movies</p>
+        </div>
+
+        <div id="emptyState" class="rounded-3xl bg-white/[0.03] border border-white/[0.08] p-16 text-center backdrop-blur-xl {% if has_movies %}hidden{% endif %}" data-aos="fade-up">
+            <div class="w-24 h-24 mx-auto mb-6 rounded-2xl bg-white/[0.05] flex items-center justify-center">
+                <i class="fas fa-film text-5xl text-gray-600"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-3 text-white">Start by searching your favorite movie</h3>
+            <p class="text-gray-500 max-w-md mx-auto">Use the search bar above and switch between Cosine Similarity and LSH to compare results.</p>
+        </div>
+
+        <div id="movieGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 {% if not has_movies %}hidden{% endif %}">
+            {% for movie in movies %}
+            <a href="{{ url_for('movie_detail', tmdb_id=movie.tmdb_id) }}" class="group relative rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.06] transition-all duration-500 hover:border-[#ff2d55]/50 hover:shadow-[0_20px_60px_rgba(255,45,85,0.2),0_0_40px_rgba(255,45,85,0.1)] hover:-translate-y-3" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 50 }}">
+                <div class="aspect-[2/3] bg-[#151520] relative overflow-hidden">
+                    {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-full object-cover transition-all duration-700 group-hover:scale-125 group-hover:brightness-110" loading="lazy">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <i class="fas fa-film text-4xl text-gray-700"></i>
+                    </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#030307] via-[#030307]/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                        <div class="w-16 h-16 rounded-2xl bg-[#ff2d55] flex items-center justify-center shadow-[0_0_50px_rgba(255,45,85,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <i class="fas fa-play text-xl text-white ml-1"></i>
+                        </div>
+                    </div>
+                    {% if movie.vote_average %}
+                    <div class="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-xl border border-white/10">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fas fa-star text-xs text-yellow-400"></i>
+                            <span class="text-sm font-bold text-white">{{ '%.1f'|format(movie.vote_average) }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500">
+                        <h3 class="text-sm font-bold text-white truncate mb-1">{{ movie.title }}</h3>
+                        {% if movie.release_date %}
+                        <p class="text-xs text-gray-400">{{ movie.release_date[:4] }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
             {% endfor %}
         </div>
-    </section>
+
+        {% if has_movies %}
+        <div class="text-center mt-16" data-aos="fade-up">
+            <a href="#search-section" id="cta-find-movie" class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#ff2d55] to-[#cc2244] text-white font-bold shadow-[0_4px_30px_rgba(255,45,85,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_10px_50px_rgba(255,45,85,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] hover:-translate-y-2 active:translate-y-0 active:scale-[0.97] transition-all duration-300 overflow-hidden cursor-pointer" role="button" aria-label="Find Your Next Favorite Movie">
+                <span class="relative z-10 flex items-center gap-3"><i class="fas fa-search"></i> Find Your Next Favorite Movie</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div class="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                    <div class="ripple-effect absolute w-20 h-20 bg-white/30 rounded-full transform scale-0 opacity-0"></div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+    </div>
 </section>
+
+<section class="py-20 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+        <div class="rounded-3xl bg-gradient-to-br from-white/[0.06] to-transparent border border-white/[0.08] p-12 backdrop-blur-xl" data-aos="fade-up">
+            <h2 class="text-4xl font-bold mb-6 text-white">Ready to Discover Your Next Favorite?</h2>
+            <p class="text-gray-400 mb-8 max-w-xl mx-auto">Start exploring thousands of movies with our AI-powered recommendation engine.</p>
+            <a href="#search-section" id="cta-get-started" class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#ff2d55] to-[#cc2244] text-white font-bold shadow-[0_4px_30px_rgba(255,45,85,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_10px_50px_rgba(255,45,85,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] hover:-translate-y-2 active:translate-y-0 active:scale-[0.97] transition-all duration-300 overflow-hidden cursor-pointer" role="button" aria-label="Get Started Now">
+                <span class="relative z-10 flex items-center gap-3"><i class="fas fa-rocket"></i> Get Started Now</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
 
 {% if not startup_error %}
 <script id="runtimeSeedData" type="application/json">{{ {
     "cosine": runtime_cosine_times,
     "lsh": runtime_lsh_times
 }|tojson }}</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    (function () {
-        const searchForm = document.getElementById("movieSearchForm");
-        const searchInput = document.getElementById("movieSearchInput");
-        const searchButton = document.getElementById("movieSearchButton");
-        const toggleButtons = Array.from(document.querySelectorAll(".saas-toggle__btn"));
-        const movieGrid = document.getElementById("movieGrid");
-        const emptyState = document.getElementById("emptyState");
-        const resultsSummary = document.getElementById("resultsSummary");
-        const activeModelMeta = document.getElementById("activeModelMeta");
-        const activeModelRuntime = document.getElementById("activeModelRuntime");
-        const cosineTimeValue = document.getElementById("cosineTimeValue");
-        const lshTimeValue = document.getElementById("lshTimeValue");
-        const speedRatioValue = document.getElementById("speedRatioValue");
-        const chartCanvas = document.getElementById("runtimeComparisonChart");
-        const seedNode = document.getElementById("runtimeSeedData");
 
-        if (!searchForm || !searchInput || !searchButton || !movieGrid || !emptyState || !resultsSummary) {
+<script>
+(function() {
+    const searchForm = document.getElementById("movieSearchForm");
+    const searchInput = document.getElementById("movieSearchInput");
+    const searchButton = document.getElementById("movieSearchButton");
+    const toggleButtons = Array.from(document.querySelectorAll(".toggle-btn"));
+    const movieGrid = document.getElementById("movieGrid");
+    const emptyState = document.getElementById("emptyState");
+    const activeModelMeta = document.getElementById("activeModelMeta");
+    const activeModelRuntime = document.getElementById("activeModelRuntime");
+    const cosineTimeValue = document.getElementById("cosineTimeValue");
+    const lshTimeValue = document.getElementById("lshTimeValue");
+    const speedRatioValue = document.getElementById("speedRatioValue");
+    const chartCanvas = document.getElementById("runtimeComparisonChart");
+    const seedNode = document.getElementById("runtimeSeedData");
+
+    if (!searchForm || !searchInput || !searchButton) return;
+
+    const recommendUrl = "{{ url_for('recommend') }}?format=json";
+    const movieDetailBase = "{{ url_for('movie_detail', tmdb_id=0) }}".replace(/0$/, "");
+
+    const state = {
+        query: "",
+        activeMethod: "lsh",
+        cache: { cosine: null, lsh: null },
+        chart: null
+    };
+
+    function escapeHtml(value) {
+        return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function formatMs(value) {
+        return Number.isFinite(value) ? value.toFixed(3) + " ms" : "-- ms";
+    }
+
+    function toNumber(value) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : NaN;
+    }
+
+    function getMethodDisplayName(method) {
+        return method === "lsh" ? "LSH" : "Cosine Similarity";
+    }
+
+    function setActiveButton(method) {
+        toggleButtons.forEach(function(button) {
+            const isActive = button.dataset.method === method;
+            button.classList.toggle('text-white', isActive);
+            button.classList.toggle('text-gray-400', !isActive);
+            if (isActive) {
+                button.style.background = '#ff2d55';
+            } else {
+                button.style.background = 'transparent';
+            }
+            button.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+        if (activeModelMeta) activeModelMeta.textContent = "Active Model: " + getMethodDisplayName(method);
+    }
+
+    function renderMovieGrid(items) {
+        if (!Array.isArray(items) || items.length === 0) {
+            movieGrid.innerHTML = '';
+            movieGrid.classList.add('hidden');
+            emptyState.classList.remove('hidden');
             return;
         }
 
-        const recommendUrl = "{{ url_for('recommend') }}?format=json";
-        const movieDetailBase = "{{ url_for('movie_detail', tmdb_id=0) }}".replace(/0$/, "");
+        const cards = items.map(function(movie) {
+            const title = escapeHtml(movie.title || "Untitled");
+            const tmdbId = escapeHtml(movie.tmdb_id || "");
+            const detailUrl = movieDetailBase + tmdbId;
+            const poster = movie.poster_url ? '<img src="' + escapeHtml(movie.poster_url) + '" alt="' + title + '" class="w-full h-full object-cover transition-all duration-700 group-hover:scale-125 group-hover:brightness-110" loading="lazy">' : '<div class="w-full h-full flex items-center justify-center"><i class="fas fa-film text-4xl text-gray-700"></i></div>';
+            const score = movie.vote_average ? '<div class="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-xl border border-white/10"><div class="flex items-center gap-1.5"><i class="fas fa-star text-xs text-yellow-400"></i><span class="text-sm font-bold text-white">' + Number(movie.vote_average).toFixed(1) + '</span></div></div>' : '';
+            const year = movie.release_date ? '<p class="text-xs text-gray-400">' + movie.release_date.substring(0, 4) + '</p>' : '';
 
-        const state = {
-            query: "",
-            activeMethod: "lsh",
-            cache: {
-                cosine: null,
-                lsh: null,
-            },
-            chart: null,
+            return '<a href="' + detailUrl + '" class="group relative rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.06] transition-all duration-500 hover:border-[#ff2d55]/50 hover:shadow-[0_20px_60px_rgba(255,45,85,0.2),0_0_40px_rgba(255,45,85,0.1)] hover:-translate-y-3"><div class="aspect-[2/3] bg-[#151520] relative overflow-hidden">' + poster + '<div class="absolute inset-0 bg-gradient-to-t from-[#030307] via-[#030307]/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div><div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500"><div class="w-16 h-16 rounded-2xl bg-[#ff2d55] flex items-center justify-center shadow-[0_0_50px_rgba(255,45,85,0.6)] transform scale-50 group-hover:scale-100 transition-transform duration-500"><i class="fas fa-play text-xl text-white ml-1"></i></div></div>' + score + '<div class="absolute bottom-0 left-0 right-0 p-4 translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500"><h3 class="text-sm font-bold text-white truncate mb-1">' + title + '</h3>' + year + '</div></div></a>';
+        }).join('');
+
+        movieGrid.innerHTML = cards;
+        movieGrid.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+
+        if (typeof AOS !== 'undefined') AOS.refresh();
+    }
+
+    function renderPerformance() {
+        const cosineRuntime = state.cache.cosine ? toNumber(state.cache.cosine.runtime_ms) : NaN;
+        const lshRuntime = state.cache.lsh ? toNumber(state.cache.lsh.runtime_ms) : NaN;
+
+        cosineTimeValue.textContent = formatMs(cosineRuntime);
+        lshTimeValue.textContent = formatMs(lshRuntime);
+
+        if (Number.isFinite(cosineRuntime) && Number.isFinite(lshRuntime) && lshRuntime > 0) {
+            speedRatioValue.textContent = (cosineRuntime / lshRuntime).toFixed(2) + "x";
+        } else {
+            speedRatioValue.textContent = "--";
+        }
+
+        const activeData = state.cache[state.activeMethod];
+        if (activeData) {
+            activeModelMeta.textContent = "Active Model: " + getMethodDisplayName(state.activeMethod);
+            activeModelRuntime.textContent = "Runtime: " + formatMs(toNumber(activeData.runtime_ms));
+        } else {
+            activeModelRuntime.textContent = "Runtime: -- ms";
+        }
+
+        updateChart(cosineRuntime, lshRuntime);
+    }
+
+    function updateChart(cosineRuntime, lshRuntime) {
+        if (!chartCanvas || typeof Chart === "undefined") return;
+
+        const cosineValue = Number.isFinite(cosineRuntime) ? cosineRuntime : 0;
+        const lshValue = Number.isFinite(lshRuntime) ? lshRuntime : 0;
+
+        const payload = {
+            labels: ["Cosine Similarity", "LSH"],
+            datasets: [{
+                label: "Runtime (ms)",
+                data: [cosineValue, lshValue],
+                backgroundColor: ["rgba(255, 45, 85, 0.7)", "rgba(0, 212, 255, 0.7)"],
+                borderColor: ["rgba(255, 45, 85, 1)", "rgba(0, 212, 255, 1)"],
+                borderWidth: 2,
+                borderRadius: 12,
+                borderSkipped: false
+            }]
         };
 
-        const defaultEmptyStateHtml =
-            "<h3>Start by searching your favorite movie</h3>" +
-            "<p>Use the search bar above and switch between Cosine Similarity and LSH to compare results.</p>";
-
-        function escapeHtml(value) {
-            return String(value || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/\"/g, "&quot;")
-                .replace(/'/g, "&#39;");
+        if (state.chart) {
+            state.chart.data = payload;
+            state.chart.update('active');
+            return;
         }
 
-        function formatMs(value) {
-            return Number.isFinite(value) ? value.toFixed(3) + " ms" : "-- ms";
-        }
-
-        function toNumber(value) {
-            const parsed = Number(value);
-            return Number.isFinite(parsed) ? parsed : NaN;
-        }
-
-        function getMethodDisplayName(method) {
-            return method === "lsh" ? "LSH" : "Cosine Similarity";
-        }
-
-        function setActiveButton(method) {
-            toggleButtons.forEach((button) => {
-                const isActive = button.dataset.method === method;
-                button.classList.toggle("is-active", isActive);
-                button.setAttribute("aria-pressed", isActive ? "true" : "false");
-            });
-
-            if (activeModelMeta) {
-                activeModelMeta.textContent = "Active Model: " + getMethodDisplayName(method);
-            }
-        }
-
-        function renderMovieGrid(items) {
-            if (!Array.isArray(items) || items.length === 0) {
-                emptyState.innerHTML = defaultEmptyStateHtml;
-                movieGrid.classList.add("is-hidden");
-                emptyState.classList.remove("is-hidden");
-                return;
-            }
-
-            const cards = items
-                .map((movie) => {
-                    const title = escapeHtml(movie.title || "Untitled");
-                    const tmdbId = escapeHtml(movie.tmdb_id || "");
-                    const detailUrl = movieDetailBase + tmdbId;
-                    const poster = movie.poster_url
-                        ? '<img src="' + escapeHtml(movie.poster_url) + '" alt="' + title + ' poster" loading="lazy">'
-                        : '<div class="poster-fallback">No Poster</div>';
-
-                    return [
-                        '<article class="saas-movie-card">',
-                        '<a class="poster-link" href="' + detailUrl + '">',
-                        poster,
-                        "</a>",
-                        '<div class="card-body">',
-                        "<h2>" + title + "</h2>",
-                        '<a class="btn-secondary" href="' + detailUrl + '">View Trailer</a>',
-                        "</div>",
-                        "</article>",
-                    ].join("");
-                })
-                .join("");
-
-            movieGrid.innerHTML = cards;
-            movieGrid.classList.remove("is-hidden");
-            emptyState.classList.add("is-hidden");
-        }
-
-        function renderPerformance() {
-            const cosineRuntime = state.cache.cosine ? toNumber(state.cache.cosine.runtime_ms) : NaN;
-            const lshRuntime = state.cache.lsh ? toNumber(state.cache.lsh.runtime_ms) : NaN;
-
-            cosineTimeValue.textContent = formatMs(cosineRuntime);
-            lshTimeValue.textContent = formatMs(lshRuntime);
-
-            if (Number.isFinite(cosineRuntime) && Number.isFinite(lshRuntime) && lshRuntime > 0) {
-                const ratio = cosineRuntime / lshRuntime;
-                speedRatioValue.textContent = ratio.toFixed(2) + "x";
-            } else {
-                speedRatioValue.textContent = "--";
-            }
-
-            const activeData = state.cache[state.activeMethod];
-            if (activeData) {
-                const prettyMethod = getMethodDisplayName(state.activeMethod);
-                activeModelMeta.textContent = "Active Model: " + prettyMethod;
-                activeModelRuntime.textContent = "Runtime: " + formatMs(toNumber(activeData.runtime_ms));
-            } else {
-                activeModelRuntime.textContent = "Runtime: -- ms";
-            }
-
-            updateChart(cosineRuntime, lshRuntime);
-        }
-
-        function updateChart(cosineRuntime, lshRuntime) {
-            if (!chartCanvas || typeof Chart === "undefined") {
-                return;
-            }
-
-            const cosineValue = Number.isFinite(cosineRuntime) ? cosineRuntime : 0;
-            const lshValue = Number.isFinite(lshRuntime) ? lshRuntime : 0;
-
-            const payload = {
-                labels: ["Cosine Similarity", "LSH"],
-                datasets: [
-                    {
-                        label: "Runtime (ms)",
-                        data: [cosineValue, lshValue],
-                        backgroundColor: ["rgba(251, 113, 133, 0.78)", "rgba(56, 189, 248, 0.78)"],
-                        borderColor: ["rgba(251, 113, 133, 1)", "rgba(56, 189, 248, 1)"],
+        const ctx = chartCanvas.getContext('2d');
+        state.chart = new Chart(ctx, {
+            type: 'bar',
+            data: payload,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(3, 3, 7, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#a1a1aa',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
                         borderWidth: 1,
-                        borderRadius: 12,
-                    },
-                ],
-            };
-
-            if (state.chart) {
-                state.chart.data = payload;
-                state.chart.update();
-                return;
-            }
-
-            state.chart = new Chart(chartCanvas, {
-                type: "bar",
-                data: payload,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: "#dbe7ff",
-                            },
-                        },
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                color: "#c9d7ff",
-                            },
-                            grid: {
-                                color: "rgba(173, 200, 255, 0.1)",
-                            },
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: "Milliseconds",
-                                color: "#dbe7ff",
-                            },
-                            ticks: {
-                                color: "#c9d7ff",
-                            },
-                            grid: {
-                                color: "rgba(173, 200, 255, 0.1)",
-                            },
-                        },
-                    },
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: { label: function(ctx) { return ctx.parsed.y.toFixed(3) + ' ms'; } }
+                    }
                 },
-            });
-        }
-
-        async function fetchRecommendations(query, method) {
-            const body = new URLSearchParams({
-                movie_name: query,
-                method: method,
-            });
-
-            const response = await fetch(recommendUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                    Accept: "application/json",
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#a1a1aa', font: { family: "'Inter', sans-serif", weight: 600 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                        ticks: { color: '#71717a', font: { family: "'Inter', sans-serif" }, callback: function(value) { return value + ' ms'; } }
+                    }
                 },
-                body: body.toString(),
-            });
-
-            const data = await response.json().catch(function () {
-                return {};
-            });
-
-            if (!response.ok) {
-                throw new Error(data.error || "Unable to fetch recommendations.");
-            }
-
-            return data;
-        }
-
-        function renderActiveMethod() {
-            const activeData = state.cache[state.activeMethod];
-            if (!activeData) {
-                return;
-            }
-
-            renderMovieGrid(activeData.results || []);
-            const methodLabel = state.activeMethod === "lsh" ? "LSH" : "Cosine Similarity";
-            resultsSummary.textContent = "Showing " + methodLabel + " recommendations for \"" + state.query + "\".";
-            renderPerformance();
-        }
-
-        async function runSearch(query) {
-            searchButton.disabled = true;
-            searchButton.textContent = "Searching...";
-            resultsSummary.textContent = "Fetching recommendations for \"" + query + "\"...";
-
-            const [cosineResult, lshResult] = await Promise.allSettled([
-                fetchRecommendations(query, "cosine"),
-                fetchRecommendations(query, "lsh"),
-            ]);
-
-            state.cache.cosine = cosineResult.status === "fulfilled" ? cosineResult.value : null;
-            state.cache.lsh = lshResult.status === "fulfilled" ? lshResult.value : null;
-
-            if (!state.cache.cosine && !state.cache.lsh) {
-                const reason = cosineResult.status === "rejected"
-                    ? cosineResult.reason
-                    : lshResult.reason;
-                throw reason instanceof Error ? reason : new Error("Search failed.");
-            }
-
-            if (!state.cache[state.activeMethod]) {
-                state.activeMethod = state.cache.lsh ? "lsh" : "cosine";
-            }
-
-            setActiveButton(state.activeMethod);
-            renderActiveMethod();
-        }
-
-        toggleButtons.forEach((button) => {
-            button.addEventListener("click", function () {
-                const method = button.dataset.method;
-                if (!method) {
-                    return;
-                }
-
-                state.activeMethod = method;
-                setActiveButton(method);
-
-                if (state.cache[method]) {
-                    renderActiveMethod();
-                } else {
-                    activeModelRuntime.textContent = "Runtime: -- ms";
-                }
-            });
-        });
-
-        searchForm.addEventListener("submit", async function (event) {
-            event.preventDefault();
-
-            const query = searchInput.value.trim();
-            if (!query) {
-                return;
-            }
-
-            state.query = query;
-
-            try {
-                await runSearch(query);
-            } catch (error) {
-                const message = error instanceof Error ? error.message : "Unable to fetch recommendations.";
-                movieGrid.classList.add("is-hidden");
-                emptyState.classList.remove("is-hidden");
-                emptyState.innerHTML = "<h3>Recommendation failed</h3><p>" + escapeHtml(message) + "</p>";
-                resultsSummary.textContent = "Try another movie title to continue.";
-            } finally {
-                searchButton.disabled = false;
-                searchButton.textContent = "Search";
+                animation: { duration: 1000, easing: 'easeOutQuart' }
             }
         });
+    }
 
-        try {
-            const seed = seedNode ? JSON.parse(seedNode.textContent || "{}") : {};
-            const cosineSeed = Array.isArray(seed.cosine) && seed.cosine.length > 0
-                ? seed.cosine.reduce((acc, value) => acc + Number(value || 0), 0) / seed.cosine.length
-                : NaN;
-            const lshSeed = Array.isArray(seed.lsh) && seed.lsh.length > 0
-                ? seed.lsh.reduce((acc, value) => acc + Number(value || 0), 0) / seed.lsh.length
-                : NaN;
-            updateChart(cosineSeed, lshSeed);
-        } catch (error) {
-            updateChart(NaN, NaN);
+    async function fetchRecommendations(query, method) {
+        const body = new URLSearchParams({ movie_name: query, method: method });
+        const response = await fetch(recommendUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Accept': 'application/json' },
+            body: body.toString()
+        });
+        const data = await response.json().catch(function() { return {}; });
+        if (!response.ok) throw new Error(data.error || "Unable to fetch recommendations.");
+        return data;
+    }
+
+    function renderActiveMethod() {
+        const activeData = state.cache[state.activeMethod];
+        if (!activeData) return;
+        renderMovieGrid(activeData.results || []);
+        const methodLabel = state.activeMethod === 'lsh' ? 'LSH' : 'Cosine Similarity';
+        if (typeof showToast === 'function') showToast('Found ' + (activeData.results || []).length + ' recommendations', 'success');
+        renderPerformance();
+    }
+
+    async function runSearch(query) {
+        searchButton.disabled = true;
+        searchButton.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> Searching...';
+
+        const [cosineResult, lshResult] = await Promise.allSettled([
+            fetchRecommendations(query, 'cosine'),
+            fetchRecommendations(query, 'lsh')
+        ]);
+
+        state.cache.cosine = cosineResult.status === 'fulfilled' ? cosineResult.value : null;
+        state.cache.lsh = lshResult.status === 'fulfilled' ? lshResult.value : null;
+
+        if (!state.cache.cosine && !state.cache.lsh) {
+            const reason = cosineResult.status === 'rejected' ? cosineResult.reason : lshResult.reason;
+            throw reason instanceof Error ? reason : new Error("Search failed.");
         }
 
+        if (!state.cache[state.activeMethod]) state.activeMethod = state.cache.lsh ? 'lsh' : 'cosine';
         setActiveButton(state.activeMethod);
-    })();
+        renderActiveMethod();
+    }
+
+    toggleButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            const method = button.dataset.method;
+            if (!method) return;
+            state.activeMethod = method;
+            setActiveButton(method);
+            if (state.cache[method]) renderActiveMethod();
+            else activeModelRuntime.textContent = "Runtime: -- ms";
+        });
+    });
+
+    searchForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const query = searchInput.value.trim();
+        if (!query) return;
+        state.query = query;
+        try {
+            await runSearch(query);
+            const resultsSection = document.getElementById('recommendations');
+            if (resultsSection) resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unable to fetch recommendations.";
+            movieGrid.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            if (typeof showToast === 'function') showToast(message, 'error');
+        } finally {
+            searchButton.disabled = false;
+            searchButton.innerHTML = '<i class="fas fa-magnifying-glass"></i><span>Search</span>';
+        }
+    });
+
+    try {
+        const seed = seedNode ? JSON.parse(seedNode.textContent || "{}") : {};
+        const cosineSeed = Array.isArray(seed.cosine) && seed.cosine.length > 0 ? seed.cosine.reduce(function(acc, v) { return acc + Number(v || 0); }, 0) / seed.cosine.length : NaN;
+        const lshSeed = Array.isArray(seed.lsh) && seed.lsh.length > 0 ? seed.lsh.reduce(function(acc, v) { return acc + Number(v || 0); }, 0) / seed.lsh.length : NaN;
+        updateChart(cosineSeed, lshSeed);
+    } catch (e) { updateChart(NaN, NaN); }
+
+    setActiveButton(state.activeMethod);
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const ctaButtons = document.querySelectorAll('#cta-find-movie, #cta-get-started');
+    
+    ctaButtons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                if (button.id === 'cta-find-movie') {
+                    setTimeout(function() {
+                        const searchInput = document.getElementById('movieSearchInput');
+                        const searchContainer = document.querySelector('#search-section');
+                        const searchGlow = searchContainer.querySelector('.search-glow');
+                        
+                        if (searchInput) {
+                            searchInput.focus();
+                            
+                            const animateSearchHighlight = function() {
+                                const container = searchContainer;
+                                const inputWrapper = container.querySelector('.group');
+                                
+                                container.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                                container.style.transform = 'scale(1.02)';
+                                container.style.boxShadow = '0 0 40px rgba(255, 45, 85, 0.3), 0 0 80px rgba(255, 45, 85, 0.15)';
+                                
+                                if (searchGlow) {
+                                    searchGlow.style.transition = 'all 0.4s ease';
+                                    searchGlow.style.opacity = '0.6';
+                                    searchGlow.style.filter = 'blur(12px)';
+                                }
+                                
+                                setTimeout(function() {
+                                    container.style.transform = 'scale(1)';
+                                    container.style.boxShadow = 'none';
+                                    
+                                    if (searchGlow) {
+                                        searchGlow.style.opacity = '0';
+                                    }
+                                }, 1500);
+                            };
+                            
+                            animateSearchHighlight();
+                            
+                            const placeholder = searchInput.getAttribute('placeholder');
+                            let charIndex = 0;
+                            const flickerText = 'Try searching...';
+                            
+                            const flickerPlaceholder = function() {
+                                if (charIndex < flickerText.length) {
+                                    searchInput.setAttribute('placeholder', flickerText.substring(0, charIndex + 1));
+                                    charIndex++;
+                                    setTimeout(flickerPlaceholder, 30);
+                                } else {
+                                    setTimeout(function() {
+                                        searchInput.setAttribute('placeholder', placeholder);
+                                    }, 800);
+                                }
+                            };
+                            flickerPlaceholder();
+                        }
+                    }, 400);
+                }
+            }
+        });
+        
+        button.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+});
 </script>
 {% endif %}
 {% endblock %}

@@ -1,63 +1,475 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}MovieMatchAI | LSH Movie Recommendations{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MovieMatchAI - AI-powered movie recommendation system using LSH and Cosine Similarity">
+    <meta name="keywords" content="movie, recommender, LSH, cosine similarity, flask, machine learning, AI">
+    <meta name="author" content="Sujen Purty, Mokalla Venu">
+    <meta property="og:title" content="MovieMatchAI - Discover Movies You'll Love">
+    <meta property="og:description" content="AI-powered movie recommendations using advanced LSH and Cosine Similarity algorithms">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#030307">
+    <title>{% block title %}MovieMatchAI | AI-Powered Movie Recommendations{% endblock %}</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neon: '#ff2d55',
+                        'neon-glow': 'rgba(255, 45, 85, 0.4)',
+                        surface: '#0a0a0f',
+                        'surface-light': '#151520'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <style>
+        :root {
+            --neon-red: #ff2d55;
+            --neon-glow: rgba(255, 45, 85, 0.4);
+            --bg-primary: #030307;
+            --bg-secondary: #0a0a0f;
+            --bg-tertiary: #151520;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --glass-bg: rgba(22, 22, 30, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-red) var(--bg-secondary);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            padding-top: 80px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--neon-red), #cc2244);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #ff3d66, var(--neon-red));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(20px, 10px) scale(1.02); }
+        }
+    </style>
 </head>
+<body class="antialiased">
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute w-[700px] h-[700px] rounded-full blur-[140px] opacity-50 top-[-250px] left-[-200px]" style="background: radial-gradient(circle, rgba(255,45,85,0.5), transparent 70%); animation: float 25s ease-in-out infinite;"></div>
+        <div class="absolute w-[600px] h-[600px] rounded-full blur-[130px] opacity-35 top-[30%] right-[-250px]" style="background: radial-gradient(circle, rgba(0,212,255,0.35), transparent 70%); animation: float 30s ease-in-out infinite -5s;"></div>
+        <div class="absolute w-[500px] h-[500px] rounded-full blur-[120px] opacity-30 bottom-[-150px] left-[20%]" style="background: radial-gradient(circle, rgba(168,85,247,0.3), transparent 70%); animation: float 28s ease-in-out infinite -10s;"></div>
+        <div class="absolute w-[450px] h-[450px] rounded-full blur-[110px] opacity-25 top-[50%] left-[-150px]" style="background: radial-gradient(circle, rgba(255,45,85,0.4), transparent 70%); animation: float 35s ease-in-out infinite -15s;"></div>
+        <div class="absolute w-[300px] h-[300px] rounded-full blur-[80px] opacity-40 bottom-[20%] right-[10%]" style="background: radial-gradient(circle, rgba(0,212,255,0.25), transparent 70%); animation: float 22s ease-in-out infinite -8s;"></div>
+    </div>
 
-<body>
-    <div class="bg-orb bg-orb--one" aria-hidden="true"></div>
-    <div class="bg-orb bg-orb--two" aria-hidden="true"></div>
-    <div class="bg-orb bg-orb--three" aria-hidden="true"></div>
-    <div class="bg-grid" aria-hidden="true"></div>
+    <div id="particles" class="fixed inset-0 pointer-events-none z-0"></div>
 
-    <header class="app-header" id="home">
-        <div class="container">
-            <section class="academic-card" aria-label="Academic Project Header">
-                <p class="academic-card__subject">Subject: ED417 - Algorithm For Big Data I</p>
-                <h1 class="academic-card__title">Project Title: LSH Based Movie Recommendation System</h1>
-                <p class="academic-card__submitted">Submitted by:</p>
-                <ul class="academic-card__authors">
-                    <li>Sujen Purty (IED/10023/22)</li>
-                    <li>Mokalla Venu (IED/10020/22)</li>
-                </ul>
-            </section>
+    <nav id="mainNav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-[#030307]/70 backdrop-blur-xl border-b border-white/[0.06]">
+        <div class="absolute inset-0 bg-gradient-to-b from-[#030307]/90 to-transparent"></div>
+        <div class="absolute inset-0 bg-white/5 opacity-0 transition-opacity duration-500"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <a href="{{ url_for('home') }}" class="flex items-center gap-3 group relative">
+                    <div class="relative">
+                        <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-[#ff2d55] to-[#cc2244] blur-md opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
+                        <div class="relative w-12 h-12 rounded-xl bg-gradient-to-br from-[#ff2d55] to-[#cc2244] flex items-center justify-center shadow-[0_0_30px_rgba(255,45,85,0.4)] group-hover:shadow-[0_0_50px_rgba(255,45,85,0.6)] transition-all duration-300">
+                            <i class="fas fa-film text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <span class="text-2xl font-bold tracking-tight relative">
+                        MovieMatch<span class="text-[#ff2d55] bg-gradient-to-r from-[#ff2d55] to-[#ff6b8a] bg-clip-text text-transparent">AI</span>
+                    </span>
+                </a>
+
+                <div class="hidden md:flex items-center gap-1">
+                    <a href="{{ url_for('home') }}" class="nav-link relative px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all duration-300 font-medium text-sm">
+                        <span class="relative z-10">Home</span>
+                    </a>
+                    <a href="{{ url_for('home') }}#recommendations" class="nav-link relative px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all duration-300 font-medium text-sm">
+                        <span class="relative z-10">Discover</span>
+                    </a>
+                    <a href="{{ url_for('home') }}#how-it-works" class="nav-link relative px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all duration-300 font-medium text-sm">
+                        <span class="relative z-10">How It Works</span>
+                    </a>
+                    <a href="{{ url_for('home') }}#performance" class="nav-link relative px-4 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all duration-300 font-medium text-sm">
+                        <span class="relative z-10">Performance</span>
+                    </a>
+                </div>
+
+                <div class="hidden md:flex items-center gap-3">
+                    <a href="https://github.com" target="_blank" class="w-11 h-11 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/[0.1] hover:border-[#ff2d55]/30 transition-all duration-300 group">
+                        <i class="fab fa-github text-lg group-hover:scale-110 transition-transform duration-200"></i>
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" class="w-11 h-11 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/[0.1] hover:border-[#ff2d55]/30 transition-all duration-300 group">
+                        <i class="fab fa-linkedin text-lg group-hover:scale-110 transition-transform duration-200"></i>
+                    </a>
+                    <a href="{{ url_for('home') }}#explore" class="relative px-6 py-3 rounded-xl bg-gradient-to-r from-[#ff2d55] to-[#cc2244] text-white font-semibold shadow-[0_4px_20px_rgba(255,45,85,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_40px_rgba(255,45,85,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 overflow-hidden">
+                        <span class="relative z-10 flex items-center gap-2"><i class="fas fa-rocket"></i>Try Demo</span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                    </a>
+                </div>
+
+                <button id="navbarToggler" class="md:hidden w-11 h-11 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white hover:bg-white/[0.1] transition-all duration-200">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+            </div>
         </div>
-    </header>
 
-    <nav class="navbar" aria-label="Primary Navigation">
-        <div class="container navbar__inner">
-            <a class="navbar__brand" href="{{ url_for('home') }}" aria-label="MovieMatchAI Home">
-                <span class="navbar__brand-icon" aria-hidden="true">🎬</span>
-                <span class="navbar__brand-text">MovieMatchAI</span>
-            </a>
-            <div class="navbar__links">
-                <a class="navbar__link" href="{{ url_for('home') }}">Home</a>
-                <a class="navbar__link" href="{{ url_for('home') }}#explore">Explore</a>
-                <a class="navbar__link" href="{{ url_for('home') }}#about">About</a>
+        <div id="mobileMenu" class="md:hidden hidden absolute top-full left-0 right-0 bg-[#030307]/98 backdrop-blur-2xl border-t border-white/[0.08] shadow-2xl">
+            <div class="px-4 py-6 space-y-3">
+                <a href="{{ url_for('home') }}" class="flex items-center gap-3 px-5 py-4 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all duration-200 font-medium">
+                    <i class="fas fa-home w-5"></i>Home
+                </a>
+                <a href="{{ url_for('home') }}#recommendations" class="flex items-center gap-3 px-5 py-4 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all duration-200 font-medium">
+                    <i class="fas fa-magic w-5"></i>Discover
+                </a>
+                <a href="{{ url_for('home') }}#how-it-works" class="flex items-center gap-3 px-5 py-4 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all duration-200 font-medium">
+                    <i class="fas fa-brain w-5"></i>How It Works
+                </a>
+                <a href="{{ url_for('home') }}#performance" class="flex items-center gap-3 px-5 py-4 rounded-xl text-gray-400 hover:text-white hover:bg-white/[0.08] transition-all duration-200 font-medium">
+                    <i class="fas fa-chart-line w-5"></i>Performance
+                </a>
+                <div class="pt-4 border-t border-white/[0.08] flex gap-3">
+                    <a href="https://github.com" target="_blank" class="flex-1 flex items-center justify-center gap-2 px-5 py-4 rounded-xl bg-white/[0.05] text-gray-400 hover:text-white hover:bg-white/[0.1] transition-all duration-200">
+                        <i class="fab fa-github"></i>GitHub
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" class="flex-1 flex items-center justify-center gap-2 px-5 py-4 rounded-xl bg-white/[0.05] text-gray-400 hover:text-white hover:bg-white/[0.1] transition-all duration-200">
+                        <i class="fab fa-linkedin"></i>LinkedIn
+                    </a>
+                </div>
+                <a href="{{ url_for('home') }}#explore" class="flex items-center justify-center gap-2 px-5 py-4 rounded-xl bg-gradient-to-r from-[#ff2d55] to-[#cc2244] text-white font-semibold shadow-lg mt-2">
+                    <i class="fas fa-rocket"></i>Try Demo
+                </a>
             </div>
         </div>
     </nav>
 
-    <main class="main-content" id="explore">
-        <div class="container">
-            {% block content %}{% endblock %}
+    <div id="loader" class="fixed inset-0 z-[9999] flex items-center justify-center" style="background: linear-gradient(135deg, #030307 0%, #0a0a0f 50%, #030307 100%);">
+        <div class="text-center">
+            <div class="relative w-24 h-24 mb-8">
+                <div class="absolute inset-0 rounded-full bg-gradient-to-br from-[#ff2d55] to-[#cc2244] blur-md opacity-60 animate-pulse" style="animation: pulse-glow 2s ease-in-out infinite;"></div>
+                <div class="absolute inset-1 rounded-full bg-[#030307]"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[#ff2d55] to-[#cc2244] flex items-center justify-center shadow-[0_0_40px_rgba(255,45,85,0.5)] animate-bounce-subtle">
+                        <i class="fas fa-film text-white text-2xl animate-spin-slow"></i>
+                    </div>
+                </div>
+                <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-[#ff2d55]/50 to-transparent rounded-full blur-sm"></div>
+            </div>
+            <p class="text-gray-400 text-lg font-medium tracking-wide">Loading MovieMatchAI</p>
+            <div class="flex items-center justify-center gap-1 mt-3">
+                <div class="w-2 h-2 rounded-full bg-[#ff2d55] animate-bounce" style="animation-delay: 0s;"></div>
+                <div class="w-2 h-2 rounded-full bg-[#ff2d55] animate-bounce" style="animation-delay: 0.1s;"></div>
+                <div class="w-2 h-2 rounded-full bg-[#ff2d55] animate-bounce" style="animation-delay: 0.2s;"></div>
+            </div>
         </div>
+        <style>
+            @keyframes pulse-glow {
+                0%, 100% { opacity: 0.6; transform: scale(1); }
+                50% { opacity: 0.9; transform: scale(1.1); }
+            }
+            @keyframes bounce-subtle {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-5px); }
+            }
+            .animate-bounce-subtle { animation: bounce-subtle 1.5s ease-in-out infinite; }
+            .animate-spin-slow { animation: spin 3s linear infinite; }
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            .animate-bounce { animation: bounce 1s ease-in-out infinite; }
+            @keyframes bounce {
+                0%, 100% { transform: translateY(0); opacity: 0.5; }
+                50% { transform: translateY(-8px); opacity: 1; }
+            }
+        </style>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[3000] flex flex-col gap-3"></div>
+
+    <main class="relative z-10">
+        {% block content %}{% endblock %}
     </main>
 
-    <footer class="site-footer" id="about">
-        <div class="container">
-            <p>© 2026 MovieMatch AI • Built with LSH</p>
+    <footer class="relative z-10 bg-[#0a0a0f] border-t border-white/[0.06]">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-px bg-gradient-to-r from-transparent via-[#ff2d55] to-transparent opacity-60"></div>
+        <div class="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#030307]/50 pointer-events-none"></div>
+        
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+                <div class="lg:col-span-2">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="relative">
+                            <div class="absolute inset-0 rounded-lg bg-gradient-to-br from-[#ff2d55] to-[#cc2244] blur-md opacity-40"></div>
+                            <div class="relative w-11 h-11 rounded-lg bg-gradient-to-br from-[#ff2d55] to-[#cc2244] flex items-center justify-center shadow-lg" style="box-shadow: 0 0 25px rgba(255,45,85,0.3);">
+                                <i class="fas fa-film text-white text-lg"></i>
+                            </div>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight">
+                            MovieMatch<span class="bg-gradient-to-r from-[#ff2d55] to-[#ff6b8a] bg-clip-text text-transparent">AI</span>
+                        </span>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-5 leading-relaxed max-w-sm">AI-Powered Movie Recommendations using LSH and Cosine Similarity algorithms for lightning-fast, accurate results.</p>
+                    <div class="flex gap-2.5">
+                        <a href="#" class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-gray-500 hover:text-white hover:bg-[#ff2d55] hover:border-[#ff2d55] transition-all duration-300 group">
+                            <i class="fab fa-github text-lg group-hover:scale-110 transition-transform duration-200"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-gray-500 hover:text-white hover:bg-[#ff2d55] hover:border-[#ff2d55] transition-all duration-300 group">
+                            <i class="fab fa-linkedin text-lg group-hover:scale-110 transition-transform duration-200"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-gray-500 hover:text-white hover:bg-[#ff2d55] hover:border-[#ff2d55] transition-all duration-300 group">
+                            <i class="fab fa-twitter text-lg group-hover:scale-110 transition-transform duration-200"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-gray-500 hover:text-white hover:bg-[#ff2d55] hover:border-[#ff2d55] transition-all duration-300 group">
+                            <i class="fab fa-youtube text-lg group-hover:scale-110 transition-transform duration-200"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-5 text-sm uppercase tracking-wider">Navigation</h4>
+                    <ul class="space-y-3">
+                        <li><a href="{{ url_for('home') }}" class="text-gray-500 hover:text-[#ff2d55] transition-colors duration-200 text-sm">Home</a></li>
+                        <li><a href="{{ url_for('home') }}#recommendations" class="text-gray-500 hover:text-[#ff2d55] transition-colors duration-200 text-sm">Discover</a></li>
+                        <li><a href="{{ url_for('home') }}#how-it-works" class="text-gray-500 hover:text-[#ff2d55] transition-colors duration-200 text-sm">How It Works</a></li>
+                        <li><a href="{{ url_for('home') }}#performance" class="text-gray-500 hover:text-[#ff2d55] transition-colors duration-200 text-sm">Performance</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-5 text-sm uppercase tracking-wider">Project</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-500 hover:text-[#ff2d55] transition-colors duration-200 text-sm">GitHub</a></li>
+                        <li><a href="#" class="text-gray-500 hover:text-[#ff2d55] transition-colors duration-200 text-sm">Documentation</a></li>
+                        <li><a href="#" class="text-gray-500 hover:text-[#ff2d55] transition-colors duration-200 text-sm">Report Issues</a></li>
+                        <li><a href="#" class="text-gray-500 hover:text-[#ff2d55] transition-colors duration-200 text-sm">API Reference</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-5 text-sm uppercase tracking-wider">Tech Stack</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3.5 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-gray-500 hover:border-[#ff2d55]/30 hover:text-gray-400 transition-all duration-200">
+                            <i class="fab fa-python mr-1.5"></i>Python
+                        </span>
+                        <span class="px-3.5 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-gray-500 hover:border-[#ff2d55]/30 hover:text-gray-400 transition-all duration-200">
+                            <i class="fas fa-flask mr-1.5"></i>Flask
+                        </span>
+                        <span class="px-3.5 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-gray-500 hover:border-[#ff2d55]/30 hover:text-gray-400 transition-all duration-200">
+                            <i class="fas fa-brain mr-1.5"></i>ML
+                        </span>
+                        <span class="px-3.5 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-gray-500 hover:border-[#ff2d55]/30 hover:text-gray-400 transition-all duration-200">
+                            <i class="fas fa-database mr-1.5"></i>TMDB
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-14 pt-8 border-t border-white/[0.06]">
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-sm">
+                    <p class="text-gray-600 flex items-center gap-2">
+                        <i class="fas fa-graduation-cap" style="color: #ff2d55;"></i>
+                        <span>Subject: ED417 - Algorithm For Big Data I</span>
+                    </p>
+                    <span class="hidden md:inline text-gray-700">•</span>
+                    <p class="text-gray-600">Project: LSH Based Movie Recommendation System</p>
+                </div>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-2 mt-3 text-sm">
+                    <p class="text-gray-600">Built by: <span class="text-gray-400 font-medium">Sujen Purty</span> & <span class="text-gray-400 font-medium">Mokalla Venu</span></p>
+                </div>
+                <p class="text-gray-700 text-sm mt-4 text-center">
+                    © 2026 MovieMatchAI. Built with <i class="fas fa-heart mx-1" style="color: #ff2d55;"></i> and Machine Learning
+                </p>
+            </div>
         </div>
     </footer>
-</body>
 
+    <div id="trailerModal" class="fixed inset-0 z-[2000] hidden items-center justify-center p-4" style="background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px);">
+        <button class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-neon hover:border-neon transition-all duration-200" onclick="closeTrailerModal()">
+            <i class="fas fa-times text-lg"></i>
+        </button>
+        <div class="max-w-4xl w-full bg-secondary rounded-2xl overflow-hidden border border-white/10" style="background: #0a0a0f;">
+            <div class="relative pt-[56.25%]">
+                <iframe id="trailerIframe" class="absolute inset-0 w-full h-full" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div id="mouseGlow" class="fixed w-[400px] h-[400px] rounded-full pointer-events-none z-0 hidden" style="background: radial-gradient(circle, var(--neon-glow), transparent 70%);"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/js/all.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navbar = document.getElementById('mainNav');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const navbarToggler = document.getElementById('navbarToggler');
+            const loader = document.getElementById('loader');
+            const mouseGlow = document.getElementById('mouseGlow');
+
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('bg-[#030307]/90', 'shadow-lg', 'shadow-black/20');
+                    navbar.classList.remove('bg-[#030307]/70');
+                } else {
+                    navbar.classList.remove('bg-[#030307]/90', 'shadow-lg', 'shadow-black/20');
+                    navbar.classList.add('bg-[#030307]/70');
+                }
+            });
+
+            if (navbarToggler && mobileMenu) {
+                navbarToggler.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    loader.style.opacity = '0';
+                    loader.style.visibility = 'hidden';
+                }, 800);
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (e.target.closest('.navbar, .btn, .movie-card, .toggle-btn, .switch-btn, a')) {
+                    mouseGlow.style.display = 'block';
+                    mouseGlow.style.left = e.clientX + 'px';
+                    mouseGlow.style.top = e.clientY + 'px';
+                }
+            });
+
+            if (typeof AOS !== 'undefined') {
+                AOS.init({
+                    duration: 800,
+                    easing: 'ease-out-cubic',
+                    once: true,
+                    offset: 100
+                });
+            }
+
+            const particles = document.getElementById('particles');
+            if (particles) {
+                for (let i = 0; i < 15; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'absolute w-1 h-1 rounded-full';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.background = '#ff2d55';
+                    particle.style.opacity = '0.3';
+                    particle.style.animation = 'particleFloat ' + (15 + Math.random() * 10) + 's linear infinite';
+                    particle.style.animationDelay = Math.random() * 15 + 's';
+                    particles.appendChild(particle);
+                }
+            }
+        });
+
+        window.openTrailerModal = function(videoId) {
+            const modal = document.getElementById('trailerModal');
+            const iframe = document.getElementById('trailerIframe');
+            if (iframe) {
+                iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeTrailerModal = function() {
+            const modal = document.getElementById('trailerModal');
+            const iframe = document.getElementById('trailerIframe');
+            if (iframe) {
+                iframe.src = '';
+            }
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        };
+
+        window.showToast = function(message, type) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'px-5 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-medium flex items-center gap-3 shadow-xl animate-slide-in';
+            
+            const iconClass = type === 'error' ? 'fa-exclamation-circle text-red-500' : 'fa-check-circle text-green-500';
+            toast.innerHTML = '<i class="fas ' + iconClass + '"></i><span>' + message + '</span>';
+
+            container.appendChild(toast);
+
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 4000);
+        };
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes particleFloat {
+                0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+                10% { opacity: 0.3; }
+                90% { opacity: 0.3; }
+                100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+            }
+            @keyframes slide-in {
+                from { opacity: 0; transform: translateX(100%); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+            .animate-slide-in { animation: slide-in 0.3s ease; }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
 </html>
