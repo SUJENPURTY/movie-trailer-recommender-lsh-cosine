@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/yourusername/movie-trailer-recommender-lsh/stargazers">
-    <img src="https://img.shields.io/github/stars/yourusername/movie-trailer-recommender-lsh?color=ff2d55&style=for-the-badge&logo=github" alt="Stars">
+    <img src="https://img.shields.io/github/stars/sujen1412/advanced-movie-recommendation-lsh?color=ff2d55&style=for-the-badge&logo=github" alt="Stars">
   </a>
   <a href="https://github.com/yourusername/movie-trailer-recommender-lsh/fork">
     <img src="https://img.shields.io/github/forks/yourusername/movie-trailer-recommender-lsh?color=00d4ff&style=for-the-badge&logo=github" alt="Forks">
@@ -24,7 +24,10 @@
 ---
 
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=800&size=32&color=ff2d55&center=true&vCenter=true&height=80&width=800&lines=AI-Powered+Movie+Recommendations;Locality+Sensitive+Hashing+(LSH);Production-Grade+ML+Pipeline;Flask+Microservices;Real-time+Similarity+Search" alt="Typing Banner">
+  <img 
+    src="https://readme-typing-svg.herokuapp.com?font=Orbitron&weight=800&size=34&duration=3000&pause=1200&color=00D4FF&center=true&vCenter=true&multiline=false&repeat=true&width=1000&height=90&lines=AI-Powered+Movie+Recommendation+System;MinHash+%2B+Locality+Sensitive+Hashing;Production-Grade+Machine+Learning+Pipeline;Real-Time+Similarity+Search+Engine;Flask+%7C+TF-IDF+%7C+TMDB+API+%7C+LSH"
+    alt="Typing SVG"
+  />
 </p>
 
 ---
@@ -45,7 +48,7 @@
 
 <div align="center">
 
-![Header Banner](https://capsule-render.vercel.app/api?type=waving&color=ff2d55,00d4ff,a855f7&height=300&section=header&text=MovieMatchAI&fontSize=80&animation=fadeIn&fontAlignY=35)
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:ff2d55,50:00d4ff,100:a855f7&height=300&section=header&text=MovieMatchAI&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Production-Grade%20AI%20Movie%20Recommendation%20System&descAlignY=58&descSize=22" width="100%" />
 
 </div>
 
@@ -151,9 +154,9 @@
                     │                   │                   │
                     ▼                   ▼                   ▼
           ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-          │   API ROUTES   │  │   STATIC ASSETS │  │   ML MODELS     │
-          │   /recommend   │  │   (CSS/JS/Img)  │  │  (LSH/Cosine)   │
-          │   /movie/<id>  │  │                 │  │  (TF-IDF)       │
+          │   API ROUTES   │  │   STATIC ASSETS │   |  ML MODELS      │
+          │   /recommend   │  │   (CSS/JS/Img)  │   │  (LSH/Cosine)   |
+          │   /movie/<id>  │  │                 │   │  (TF-IDF)       |
           └────────┬────────┘  └────────┬────────┘  └────────┬────────┘
                    │                    │                    │
                    └────────────────────┼────────────────────┘
@@ -175,20 +178,20 @@
 └──────────────────────────────────────────────────────────────────────────────┘
 
    ┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌───────────┐
-   │  DATA LOAD  │────▶│  PREPROCESS  │────▶│  TF-IDF     │────▶│  MINHASH  │
+   │  DATA LOAD  │────▶│  PREPROCESS  │────▶│  TF-IDF    │──── │  MINHASH  │
    │  movies.csv │     │  - Clean     │     │  Vectorize  │     │  LSH      │
-   └─────────────┘     │  - Tokenize   │     │  - Vocab    │     │  - Hash   │
-                       │  - Stopwords   │     │  - IDF      │     │  - Buckets│
+   └─────────────┘     │  - Tokenize  │     │  - Vocab    │     │  - Hash   │
+                       │  - Stopwords │     │  - IDF      │     │  - Buckets│
                        └──────────────┘     └─────────────┘     └───────────┘
                                                                      │
                                                                      ▼
    ┌────────────────────────────────────────────────────────────────────────┐
    │                         RECOMMENDATION QUERY                           │
-   │  1. User searches "Inception"                                         │
-   │  2. Convert query to TF-IDF vector                                    │
-   │  3. Query LSH buckets OR compute cosine similarity                    │
-   │  4. Rank by similarity score                                          │
-   │  5. Return top-N recommendations                                      │
+   │  1. User searches "Inception"                                          │
+   │  2. Convert query to TF-IDF vector                                     │
+   │  3. Query LSH buckets OR compute cosine similarity                     │
+   │  4. Rank by similarity score                                           │
+   │  5. Return top-N recommendations                                       │
    └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -213,15 +216,15 @@
 ┌────────────────────────────────────────────────────────────────┐
 │                    SCALABILITY PROJECTION                      │
 ├────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Cosine: ─────────────────────────────────── (O(n) linear)      │
-│                                                                 │
-│  LSH:     ───────── (O(1) to O(log n) sub-linear)             │
-│                                                                 │
-│                         10K    50K    100K   500K  1M           │
-│                     └───────┴───────┴───────┴─────┴─────►       │
+│                                                                │
+│  Cosine: ─────────────────────────────────── (O(n) linear)     │
+│                                                                │
+│  LSH:     ───────── (O(1) to O(log n) sub-linear)              │
+│                                                                │
+│                         10K    50K    100K   500K  1M          │
+│                     └───────┴───────┴───────┴─────┴─────►      │
 │                         Movies in Database                     │
-│                                                                 │
+│                                                                │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -454,16 +457,16 @@ curl "http://localhost:5000/movie/27205?format=json"
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         LSH PRODUCTION ADVANTAGES                            │
+│                         LSH PRODUCTION ADVANTAGES                           |
 ├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
+│                                                                             │
 │  ✅ Sub-linear time complexity — handles millions of items                  │
-│  ✅ CPU-efficient — no GPU required                                         │
-│  ✅ Memory-bounded — sparse hash tables                                    │
+│  ✅ CPU-efficient — no GPU required                                         |
+│  ✅ Memory-bounded — sparse hash tables                                     │
 │  ✅ Parallelizable — independent hash tables                                │
 │  ✅ Incremental updates — add new items without retraining                  │
 │  ✅ Tunable accuracy — balance speed vs precision                           │
-│  ✅ Explainable buckets — understand why movies are similar                │
+│  ✅ Explainable buckets — understand why movies are similar                 │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
