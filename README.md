@@ -456,19 +456,19 @@ curl "http://localhost:5000/movie/27205?format=json"
 ### Why LSH is Production-Ready
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         LSH PRODUCTION ADVANTAGES                           |
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ✅ Sub-linear time complexity — handles millions of items                  │
-│  ✅ CPU-efficient — no GPU required                                         |
-│  ✅ Memory-bounded — sparse hash tables                                     │
-│  ✅ Parallelizable — independent hash tables                                │
-│  ✅ Incremental updates — add new items without retraining                  │
-│  ✅ Tunable accuracy — balance speed vs precision                           │
-│  ✅ Explainable buckets — understand why movies are similar                 │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+─────────────────────────────────────────────────────────────────────────────
+                         LSH PRODUCTION ADVANTAGES                           
+─────────────────────────────────────────────────────────────────────────────
+                                                                             
+  ✅ Sub-linear time complexity — handles millions of items                  
+  ✅ CPU-efficient — no GPU required                                         
+  ✅ Memory-bounded — sparse hash tables                                     
+  ✅ Parallelizable — independent hash tables                                
+  ✅ Incremental updates — add new items without retraining                  
+  ✅ Tunable accuracy — balance speed vs precision                           
+  ✅ Explainable buckets — understand why movies are similar                 
+                                                                              
+─────────────────────────────────────────────────────────────────────────────
 ```
 
 ### Engineering Tradeoffs
